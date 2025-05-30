@@ -29,8 +29,34 @@ interface ThankYouStep {
   type: "thankyou";
   content: string;
 }
+interface MultiInputStep {
+  type: "multi-input";
+  id: string; // unique id for the step
+  fields: {
+    id: string;
+    label: string;
+    placeholder?: string;
+    inputType: string;
+    required: boolean;
+  }[];
+}
 
-type Step = IntroStep | TosStep | QuestionStep | ThankYouStep;
+interface MultiSelectStep {
+  type: "multi-select";
+  id: string;
+  question: string;
+  secondaryHeading: string;
+  options: string[];
+  minRequired: number;
+}
+
+interface AdditionalContactsStep {
+  type: "additionalContacts";
+  id: string;
+}
+
+type Step = IntroStep | TosStep | QuestionStep | ThankYouStep | MultiInputStep | MultiSelectStep | AdditionalContactsStep;
+
 
 const steps: Step[] = [
   {
@@ -40,6 +66,39 @@ const steps: Step[] = [
   {
     type: "tos",
     content: `Terms of Data Use\n\nThis is a personal project, and all the information you provide will be used solely for my personal use. Your data will be stored privately on my home computer and will not be shared publicly. If you don’t feel comfortable sharing this information, that’s completely fine!`,
+  },
+  {
+    type: "multi-input",
+    id: "name-contact",
+    fields: [
+      { id: "firstName", label: "First Name *", inputType: "text", required: true },
+      { id: "middleName", label: "Middle Name(s) (optional)", inputType: "text", required: false },
+      { id: "lastName", label: "Last Name *", inputType: "text", required: true },
+      { id: "phone", label: "Primary Phone Number *", inputType: "tel", required: true },
+      { id: "email", label: "Primary Email *", inputType: "email", required: true },
+    ],
+  },
+  {
+    type: "multi-select",
+    id: "relationship",
+    question: "How do we know each other?",
+    secondaryHeading: "Any 3rd places would go into Community (The Library, Through Sports, Online, etc)",
+    options: [
+      "Family",
+      "Friends",
+      "Work",
+      "School",
+      "College",
+      "Acquaintances",
+      "WE JUST MET",
+      "Community",
+      "Other",
+    ],
+    minRequired: 1,
+  },
+  {
+    type: "additionalContacts",
+    id: "additionalContacts",
   },
   {
     type: "question",
@@ -68,9 +127,20 @@ const steps: Step[] = [
   },
 ];
 
+interface FormData {
+  [key: string]: string | string[];
+  additionalPhones: string[];
+  additionalEmails: string[];
+  // add other known fields here as needed
+}
+
 export default function TypeformStyleForm() {
   const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [formData, setFormData] = useState<FormData>({
+    additionalPhones: [],
+    additionalEmails: [],
+  });
+
   const [tosAccepted, setTosAccepted] = useState(false);
 
   const currentStep = steps[step];
@@ -87,13 +157,29 @@ export default function TypeformStyleForm() {
 
   const nextStep = () => {
     if (step < steps.length - 1) {
+      // Before moving on from last question step, clean empty entries for additionalPhones and additionalEmails
+      if (currentStep.type === "question" && step === steps.length - 2) {
+        // Clean empty strings from additionalPhones and additionalEmails
+        const cleanedPhones = (formData.additionalPhones || []).filter(
+          (p) => typeof p === "string" && p.trim() !== ""
+        );
+        const cleanedEmails = (formData.additionalEmails || []).filter(
+          (e) => typeof e === "string" && e.trim() !== ""
+        );
+
+        const cleanedFormData = {
+          ...formData,
+          additionalPhones: cleanedPhones,
+          additionalEmails: cleanedEmails,
+        };
+
+        console.log("Form Submitted:\n", JSON.stringify(cleanedFormData, null, 2));
+        // You can now submit cleanedFormData to your backend or API here instead of formData
+      }
+
       setStep(step + 1);
       if (currentStep.type === "tos") {
         setTosAccepted(false);
-      }
-      if (currentStep.type === "question" && step === steps.length - 2) {
-        // Last question submitted, here you can handle form submission
-        console.log("Form Submitted:\n", JSON.stringify(formData, null, 2));
       }
     }
   };
@@ -112,16 +198,49 @@ export default function TypeformStyleForm() {
     setStep(steps.length - 1);
   };
 
-  // Disable Next/Submit button on question steps if empty input
   const isNextDisabled = () => {
     if (currentStep.type === "tos") {
       return !tosAccepted;
     }
     if (currentStep.type === "question") {
-      return !formData[currentStep.id]?.trim();
+      const val = formData[currentStep.id];
+      return typeof val !== "string" || !val.trim();
+    }
+
+    if (currentStep.type === "multi-input") {
+      // Validate required fields are not empty
+      return currentStep.fields.some(
+        (f) => f.required && !formData[f.id]?.toString().trim()
+      );
+    }
+    if (currentStep.type === "multi-select") {
+      const selected = formData[currentStep.id] as string[] | undefined;
+      return !selected || selected.length < currentStep.minRequired;
     }
     return false;
   };
+
+  const handleMultiInputChange = (fieldId: string, value: string) => {
+    setFormData({
+      ...formData,
+      [fieldId]: value,
+    });
+  };
+
+  const handleMultiSelectToggle = (option: string) => {
+    const currentSelection = (formData["relationship"] as string[] | undefined) || [];
+    let updatedSelection;
+    if (currentSelection.includes(option)) {
+      updatedSelection = currentSelection.filter((o) => o !== option);
+    } else {
+      updatedSelection = [...currentSelection, option];
+    }
+    setFormData({
+      ...formData,
+      relationship: updatedSelection,
+    });
+  };
+
 
   return (
     <div className="flex items-center justify-center h-screen bg-muted p-4">
@@ -172,6 +291,155 @@ export default function TypeformStyleForm() {
                 </div>
               </div>
             )}
+
+            {currentStep.type === "multi-input" && (
+              <div>
+                {currentStep.fields.map((field) => (
+                  <div key={field.id} className="mb-4">
+                    <Label htmlFor={field.id} className="text-xl font-semibold">
+                      {field.label}
+                    </Label>
+                    <Input
+                      id={field.id}
+                      type={field.inputType}
+                      placeholder={field.placeholder || ""}
+                      value={(formData[field.id] as string) || ""}
+                      onChange={(e) => handleMultiInputChange(field.id, e.target.value)}
+                      className="mt-2"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {currentStep.type === "multi-select" && (
+              <div>
+                <h3 className="text-xl font-semibold">{currentStep.question}</h3>
+                <p className="mb-4 text-sm text-muted-foreground">{currentStep.secondaryHeading}</p>
+                <div className="grid grid-cols-2 gap-2 max-w-md">
+                  {currentStep.options.map((option) => {
+                    const selected = (formData[currentStep.id] as string[] | undefined)?.includes(option) ?? false;
+                    return (
+                      <label
+                        key={option}
+                        className={`cursor-pointer rounded-md border p-2 ${
+                          selected ? "bg-blue-500 text-white" : "bg-white text-gray-700"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => handleMultiSelectToggle(option)}
+                          className="mr-2 cursor-pointer"
+                        />
+                        {option}
+                      </label>
+                    );
+                  })}
+                </div>
+                {isNextDisabled() && (
+                  <p className="mt-2 text-red-600 text-sm">Please select at least one option.</p>
+                )}
+              </div>
+            )}
+
+            {currentStep.type === "additionalContacts" && (
+  <div>
+    <h2 className="text-xl font-semibold mb-4">Additional Contacts (Optional)</h2>
+
+    {/* Additional Phone Numbers */}
+    <div className="mb-6">
+      <Label className="font-semibold">Additional Phone Numbers (max 3)</Label>
+      {((formData.additionalPhones as string[]) || []).map((phone, index) => (
+        <div key={`phone-${index}`} className="flex items-center space-x-2 mt-2">
+          <Input
+            type="tel"
+            placeholder={`Phone #${index + 1}`}
+            value={phone}
+            onChange={(e) => {
+              const newPhones = [...((formData.additionalPhones as string[]) || [])];
+              newPhones[index] = e.target.value;
+              setFormData({ ...formData, additionalPhones: newPhones });
+            }}
+            className="flex-grow"
+          />
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              const newPhones = [...((formData.additionalPhones as string[]) || [])];
+              newPhones.splice(index, 1);
+              setFormData({ ...formData, additionalPhones: newPhones });
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      ))}
+      <Button
+        variant="secondary"
+        className="mt-3"
+        onClick={() => {
+          const newPhones = [...((formData.additionalPhones as string[]) || [])];
+          if (newPhones.length < 3) {
+            newPhones.push("");
+            setFormData({ ...formData, additionalPhones: newPhones });
+          }
+        }}
+        disabled={((formData.additionalPhones as string[])?.length || 0) >= 3}
+      >
+        Add Phone Number
+      </Button>
+    </div>
+
+    {/* Additional Emails */}
+    <div>
+      <Label className="font-semibold">Additional Emails (max 3)</Label>
+      {((formData.additionalEmails as string[]) || []).map((email, index) => (
+        <div key={`email-${index}`} className="flex items-center space-x-2 mt-2">
+          <Input
+            type="email"
+            placeholder={`Email #${index + 1}`}
+            value={email}
+            onChange={(e) => {
+              const newEmails = [...((formData.additionalEmails as string[]) || [])];
+              newEmails[index] = e.target.value;
+              setFormData({ ...formData, additionalEmails: newEmails });
+            }}
+            className="flex-grow"
+          />
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              const newEmails = [...((formData.additionalEmails as string[]) || [])];
+              newEmails.splice(index, 1);
+              setFormData({ ...formData, additionalEmails: newEmails });
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      ))}
+      <Button
+        variant="secondary"
+        className="mt-3"
+        onClick={() => {
+          const newEmails = [...((formData.additionalEmails as string[]) || [])];
+          if (newEmails.length < 3) {
+            newEmails.push("");
+            setFormData({ ...formData, additionalEmails: newEmails });
+          }
+        }}
+        disabled={((formData.additionalEmails as string[])?.length || 0) >= 3}
+      >
+        Add Email
+      </Button>
+    </div>
+  </div>
+)}
+
+
 
             {currentStep.type === "question" && (
               <div>
