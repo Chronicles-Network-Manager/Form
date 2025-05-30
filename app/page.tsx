@@ -29,6 +29,8 @@ import { DatetimePicker } from "@/components/ui/datetime-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { TagsInput } from "@/components/ui/tags-input";
 import { Separator } from "@/components/ui/separator";
+import { uploadFormData } from "./Utils/Supabase/service";
+import router from "next/router";
 
 const formSchema = z.object({
   firstName: z.string().min(1).nonempty("First name is required"),
@@ -132,14 +134,19 @@ export default function MyForm() {
     form.setValue("otherEmails", updated);
   };
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      console.log(values);
-      toast(
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-        </pre>
-      );
+      // Pass entire form values here
+      const result = await uploadFormData(values);
+
+      if (result.error) {
+        toast.error("Failed to fetch profile: " + result);
+      } else {
+        toast.success("Profile fetched successfully!");
+
+        const userName = values.firstName || "";
+        router.push(`/thank-you?user=${encodeURIComponent(userName)}`);
+      }
     } catch (error) {
       console.error("Form submission error", error);
       toast.error("Failed to submit the form. Please try again.");
@@ -150,12 +157,12 @@ export default function MyForm() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-8 max-w-3xl mx-auto py-10"
+        className="space-y-8 max-w-3xl mx-auto py-4 md:py-10 px-4"
       >
-        <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-lg border p-4 gap-4 md:gap-0">
           <div className="space-y-0.5">
             <FormLabel>Hey there {}!</FormLabel>
-            <FormDescription>
+            <FormDescription className="text-sm md:text-base">
               Hi! I'm Jonathan. Whether we're old friends or new acquaintances,
               I'd love to get to know you better through this form. I'm
               especially interested in learning who to turn to when I need
@@ -167,8 +174,8 @@ export default function MyForm() {
           </div>
         </div>
 
-        <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-          <div className="space-y-0.5">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-lg border p-4 gap-4 md:gap-0">
+          <div className="space-y-0.5 flex-1">
             <p className="text-sm font-medium leading-none">
               Terms of Data Use<span className="text-red-600">*</span>
             </p>
@@ -184,11 +191,12 @@ export default function MyForm() {
             checked={termsAccepted}
             onCheckedChange={setTermsAccepted}
             aria-readonly
+            className="mt-2 md:mt-0 md:ml-4"
           />
         </div>
 
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div className="md:col-span-4">
             <FormField
               control={form.control}
               name="firstName"
@@ -209,7 +217,7 @@ export default function MyForm() {
             />
           </div>
 
-          <div className="col-span-4">
+          <div className="md:col-span-4">
             <FormField
               control={form.control}
               name="middleNames"
@@ -228,7 +236,7 @@ export default function MyForm() {
             />
           </div>
 
-          <div className="col-span-4">
+          <div className="md:col-span-4">
             <FormField
               control={form.control}
               name="lastName"
@@ -250,8 +258,8 @@ export default function MyForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div className="md:col-span-6">
             <FormField
               control={form.control}
               name="phone"
@@ -280,7 +288,7 @@ export default function MyForm() {
               )}
             />
           </div>
-          <div className="col-span-6">
+          <div className="md:col-span-6">
             <FormField
               control={form.control}
               name="email"
@@ -308,8 +316,8 @@ export default function MyForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div className="md:col-span-4">
             <FormField
               control={form.control}
               name="groups"
@@ -324,7 +332,7 @@ export default function MyForm() {
                       values={field.value}
                       onValuesChange={field.onChange}
                       loop
-                      className={`min-w-3xl ${
+                      className={`min-w-full ${
                         !termsAccepted ? "disabled-overlay" : ""
                       }`}
                     >
@@ -470,7 +478,7 @@ export default function MyForm() {
 
         <Separator className="my-4" />
 
-        <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-lg border p-4 gap-4 md:gap-0">
           <div className="space-y-0.5">
             <FormLabel>Your Work</FormLabel>
             <FormDescription>
@@ -502,8 +510,8 @@ export default function MyForm() {
           )}
         />
 
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div className="md:col-span-6">
             <FormField
               control={form.control}
               name="jobTitle"
@@ -522,7 +530,7 @@ export default function MyForm() {
             />
           </div>
 
-          <div className="col-span-6">
+          <div className="md:col-span-6">
             <FormField
               control={form.control}
               name="yoe"
@@ -542,9 +550,9 @@ export default function MyForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
           {/* Other Phone Numbers */}
-          <div className="col-span-6 space-y-4">
+          <div className="md:col-span-6 space-y-4">
             {(form.watch("otherPhones") || []).map((_, index) => (
               <FormField
                 key={index}
@@ -604,7 +612,7 @@ export default function MyForm() {
           </div>
 
           {/* Other Emails */}
-          <div className="col-span-6 space-y-4">
+          <div className="md:col-span-6 space-y-4">
             {(form.watch("otherEmails") || []).map((_, index) => (
               <FormField
                 key={index}
@@ -711,7 +719,7 @@ export default function MyForm() {
 
         <Separator className="my-4" />
 
-        <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-lg border p-4 gap-4 md:gap-0">
           <div className="space-y-0.5">
             <FormLabel>Your Global Footprint</FormLabel>
             <FormDescription>
@@ -745,8 +753,8 @@ export default function MyForm() {
           )}
         />
 
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div className="md:col-span-6">
             <FormField
               control={form.control}
               name="address2"
@@ -765,7 +773,7 @@ export default function MyForm() {
             />
           </div>
 
-          <div className="col-span-6">
+          <div className="md:col-span-6">
             <FormField
               control={form.control}
               name="postalCode"
@@ -785,8 +793,8 @@ export default function MyForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div className="md:col-span-4">
             <FormField
               control={form.control}
               name="city"
@@ -811,7 +819,7 @@ export default function MyForm() {
             />
           </div>
 
-          <div className="col-span-4">
+          <div className="md:col-span-4">
             <FormField
               control={form.control}
               name="state"
@@ -830,7 +838,7 @@ export default function MyForm() {
             />
           </div>
 
-          <div className="col-span-4">
+          <div className="md:col-span-4">
             <FormField
               control={form.control}
               name="country"
@@ -867,7 +875,7 @@ export default function MyForm() {
               {previousFields.map((field, index) => (
                 <div
                   key={field.id}
-                  className={`flex items-center gap-2 mb-2 ${
+                  className={`flex flex-col md:flex-row items-start md:items-center gap-2 mb-2 ${
                     !termsAccepted ? "disabled-overlay" : ""
                   }`}
                 >
@@ -989,7 +997,7 @@ export default function MyForm() {
 
         <Separator className="my-4" />
 
-        <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-lg border p-4 gap-4 md:gap-0">
           <div className="space-y-0.5">
             <FormLabel>Socials</FormLabel>
             <FormDescription>
@@ -1000,8 +1008,8 @@ export default function MyForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div className="md:col-span-6">
             <FormField
               control={form.control}
               name="instagram"
@@ -1023,7 +1031,7 @@ export default function MyForm() {
             />
           </div>
 
-          <div className="col-span-6">
+          <div className="md:col-span-6">
             <FormField
               control={form.control}
               name="linkedin"
@@ -1046,8 +1054,8 @@ export default function MyForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div className="md:col-span-6">
             <FormField
               control={form.control}
               name="discord"
@@ -1069,7 +1077,7 @@ export default function MyForm() {
             />
           </div>
 
-          <div className="col-span-6">
+          <div className="md:col-span-6">
             <FormField
               control={form.control}
               name="reddit"
@@ -1092,8 +1100,8 @@ export default function MyForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div className="md:col-span-6">
             <FormField
               control={form.control}
               name="github"
