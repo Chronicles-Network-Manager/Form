@@ -1,519 +1,1152 @@
 "use client";
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
+import { useFieldArray, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { motion } from "framer-motion";
+import { PhoneInput } from "@/components/ui/phone-input";
+import {
+  MultiSelector,
+  MultiSelectorContent,
+  MultiSelectorInput,
+  MultiSelectorItem,
+  MultiSelectorList,
+  MultiSelectorTrigger,
+} from "@/components/ui/multi-select";
+import { DatetimePicker } from "@/components/ui/datetime-picker";
+import { Textarea } from "@/components/ui/textarea";
+import { TagsInput } from "@/components/ui/tags-input";
+import { Separator } from "@/components/ui/separator";
 
-interface IntroStep {
-  type: "intro";
-  content: string;
-}
+const formSchema = z.object({
+  firstName: z.string().min(1).nonempty("First name is required"),
+  middleNames: z.string().min(1).optional(),
+  lastName: z.string().min(1).nonempty("Last name is required"),
+  phone: z.string(),
+  email: z.string(),
+  otherPhones: z.array(z.string()).optional(),
+  otherEmails: z.array(z.string()).optional(),
+  groups: z.array(z.string()).nonempty("Please add at least one item"),
+  birthday: z.coerce.date(),
+  anniversaries: z.array(
+    z.object({
+      label: z.string().optional(),
+      date: z.coerce.date().optional(),
+    })
+  ),
+  company: z.string().min(1).optional(),
+  jobTitle: z.string().min(1).optional(),
+  yoe: z.coerce.number().min(0, "Must be a non-negative number"),
+  work: z.string().optional(),
+  workLink: z.string().min(1).optional(),
+  address: z.string().min(1).optional(),
+  address2: z.string().min(1).optional(),
+  city: z.string().min(1),
+  postalCode: z.string().min(1).optional(),
+  state: z.string().min(1).optional(),
+  country: z.string().min(1),
+  dreamVacation: z.string().min(1).optional(),
+  previous: z.array(
+    z.object({
+      city: z.string(),
+      country: z.string(),
+    })
+  ),
+  visited: z.array(z.string()).nonempty("Please add at least one item"),
+  interests: z.array(z.string()).optional(),
+  instagram: z.string().min(1).optional(),
+  linkedin: z.string().min(1).optional(),
+  github: z.string().min(1).optional(),
+  reddit: z.string().min(1).optional(),
+  discord: z.string().min(1).optional(),
+  other: z.string().min(1).optional(),
+});
 
-interface TosStep {
-  type: "tos";
-  content: string;
-}
+export default function MyForm() {
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
-interface QuestionStep {
-  type: "question";
-  id: string;
-  label: string;
-  placeholder: string;
-  inputType: string;
-}
-
-interface ThankYouStep {
-  type: "thankyou";
-  content: string;
-}
-interface MultiInputStep {
-  type: "multi-input";
-  id: string; // unique id for the step
-  fields: {
-    id: string;
-    label: string;
-    placeholder?: string;
-    inputType: string;
-    required: boolean;
-  }[];
-}
-
-interface MultiSelectStep {
-  type: "multi-select";
-  id: string;
-  question: string;
-  secondaryHeading: string;
-  options: string[];
-  minRequired: number;
-}
-
-interface AdditionalContactsStep {
-  type: "additionalContacts";
-  id: string;
-}
-
-type Step = IntroStep | TosStep | QuestionStep | ThankYouStep | MultiInputStep | MultiSelectStep | AdditionalContactsStep;
-
-
-const steps: Step[] = [
-  {
-    type: "intro",
-    content: `Hey there!\n\nHi! I’m Jonathan. Whether we’re old friends or new acquaintances, I’d love to get to know you better through this form. I’m especially interested in learning who to turn to when I need advice about moving to a new city (which you may have lived in at some point) or trying out new activities that you may be interested in.\n\nFeel free to answer as much as you like — the more details, the better! Without further ado, let’s get started.`,
-  },
-  {
-    type: "tos",
-    content: `Terms of Data Use\n\nThis is a personal project, and all the information you provide will be used solely for my personal use. Your data will be stored privately on my home computer and will not be shared publicly. If you don’t feel comfortable sharing this information, that’s completely fine!`,
-  },
-  {
-    type: "multi-input",
-    id: "name-contact",
-    fields: [
-      { id: "firstName", label: "First Name *", inputType: "text", required: true },
-      { id: "middleName", label: "Middle Name(s) (optional)", inputType: "text", required: false },
-      { id: "lastName", label: "Last Name *", inputType: "text", required: true },
-      { id: "phone", label: "Primary Phone Number *", inputType: "tel", required: true },
-      { id: "email", label: "Primary Email *", inputType: "email", required: true },
-    ],
-  },
-  {
-    type: "multi-select",
-    id: "relationship",
-    question: "How do we know each other?",
-    secondaryHeading: "Any 3rd places would go into Community (The Library, Through Sports, Online, etc)",
-    options: [
-      "Family",
-      "Friends",
-      "Work",
-      "School",
-      "College",
-      "Acquaintances",
-      "WE JUST MET",
-      "Community",
-      "Other",
-    ],
-    minRequired: 1,
-  },
-  {
-    type: "additionalContacts",
-    id: "additionalContacts",
-  },
-  {
-    type: "question",
-    id: "name",
-    label: "What's your name?",
-    placeholder: "John Doe",
-    inputType: "text",
-  },
-  {
-    type: "question",
-    id: "email",
-    label: "What's your email address?",
-    placeholder: "john@example.com",
-    inputType: "email",
-  },
-  {
-    type: "question",
-    id: "age",
-    label: "How old are you?",
-    placeholder: "25",
-    inputType: "number",
-  },
-  {
-    type: "thankyou",
-    content: "", // We'll render custom thank you content
-  },
-];
-
-interface FormData {
-  [key: string]: string | string[];
-  additionalPhones: string[];
-  additionalEmails: string[];
-  // add other known fields here as needed
-}
-
-export default function TypeformStyleForm() {
-  const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState<FormData>({
-    additionalPhones: [],
-    additionalEmails: [],
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      groups: [],
+      visited: ["Paris - France"],
+      birthday: new Date(),
+      previous: [{ city: "", country: "" }],
+      anniversaries: [{ label: "", date: new Date() }],
+      otherPhones: [""],
+      otherEmails: [""],
+    },
   });
 
-  const [tosAccepted, setTosAccepted] = useState(false);
+  const {
+    fields: anniversaryFields,
+    append: appendAnniversary,
+    remove: removeAnniversary,
+  } = useFieldArray({
+    control: form.control,
+    name: "anniversaries",
+  });
 
-  const currentStep = steps[step];
-  const progressValue = (step / (steps.length - 1)) * 100;
+  const {
+    fields: previousFields,
+    append: appendPrevious,
+    remove: removePrevious,
+  } = useFieldArray({
+    control: form.control,
+    name: "previous",
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (currentStep.type === "question") {
-      setFormData({
-        ...formData,
-        [currentStep.id]: e.target.value,
-      });
-    }
+  const otherPhones = form.watch("otherPhones") || [];
+
+  const addPhone = () => {
+    form.setValue("otherPhones", [...otherPhones, ""]);
   };
 
-  const nextStep = () => {
-    if (step < steps.length - 1) {
-      // Before moving on from last question step, clean empty entries for additionalPhones and additionalEmails
-      if (currentStep.type === "question" && step === steps.length - 2) {
-        // Clean empty strings from additionalPhones and additionalEmails
-        const cleanedPhones = (formData.additionalPhones || []).filter(
-          (p) => typeof p === "string" && p.trim() !== ""
-        );
-        const cleanedEmails = (formData.additionalEmails || []).filter(
-          (e) => typeof e === "string" && e.trim() !== ""
-        );
-
-        const cleanedFormData = {
-          ...formData,
-          additionalPhones: cleanedPhones,
-          additionalEmails: cleanedEmails,
-        };
-
-        console.log("Form Submitted:\n", JSON.stringify(cleanedFormData, null, 2));
-        // You can now submit cleanedFormData to your backend or API here instead of formData
-      }
-
-      setStep(step + 1);
-      if (currentStep.type === "tos") {
-        setTosAccepted(false);
-      }
-    }
+  const removePhone = (index: number) => {
+    const updated = [...otherPhones];
+    updated.splice(index, 1);
+    form.setValue("otherPhones", updated);
   };
 
-  const prevStep = () => {
-    if (step > 0) {
-      setStep(step - 1);
-      if (steps[step - 1].type === "tos") {
-        setTosAccepted(false);
-      }
-    }
+  const otherEmails = form.watch("otherEmails") || [];
+
+  const addEmail = () => {
+    form.setValue("otherEmails", [...otherEmails, ""]);
   };
 
-  const exitForm = () => {
-    // Skip directly to thank you page on exit
-    setStep(steps.length - 1);
+  const removeEmail = (index: number) => {
+    const updated = [...otherPhones];
+    updated.splice(index, 1);
+    form.setValue("otherEmails", updated);
   };
 
-  const isNextDisabled = () => {
-    if (currentStep.type === "tos") {
-      return !tosAccepted;
-    }
-    if (currentStep.type === "question") {
-      const val = formData[currentStep.id];
-      return typeof val !== "string" || !val.trim();
-    }
-
-    if (currentStep.type === "multi-input") {
-      // Validate required fields are not empty
-      return currentStep.fields.some(
-        (f) => f.required && !formData[f.id]?.toString().trim()
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      console.log(values);
+      toast(
+        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+          <code className="text-white">{JSON.stringify(values, null, 2)}</code>
+        </pre>
       );
+    } catch (error) {
+      console.error("Form submission error", error);
+      toast.error("Failed to submit the form. Please try again.");
     }
-    if (currentStep.type === "multi-select") {
-      const selected = formData[currentStep.id] as string[] | undefined;
-      return !selected || selected.length < currentStep.minRequired;
-    }
-    return false;
-  };
-
-  const handleMultiInputChange = (fieldId: string, value: string) => {
-    setFormData({
-      ...formData,
-      [fieldId]: value,
-    });
-  };
-
-  const handleMultiSelectToggle = (option: string) => {
-    const currentSelection = (formData["relationship"] as string[] | undefined) || [];
-    let updatedSelection;
-    if (currentSelection.includes(option)) {
-      updatedSelection = currentSelection.filter((o) => o !== option);
-    } else {
-      updatedSelection = [...currentSelection, option];
-    }
-    setFormData({
-      ...formData,
-      relationship: updatedSelection,
-    });
-  };
-
+  }
 
   return (
-    <div className="flex items-center justify-center h-screen bg-muted p-4">
-      <Card className="w-full max-w-md shadow-2xl p-6">
-        <CardContent>
-          {currentStep.type !== "thankyou" && (
-            <Progress value={progressValue} className="mb-6" />
-          )}
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-8 max-w-3xl mx-auto py-10"
+      >
+        <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+          <div className="space-y-0.5">
+            <FormLabel>Hey there {}!</FormLabel>
+            <FormDescription>
+              Hi! I'm Jonathan. Whether we're old friends or new acquaintances,
+              I'd love to get to know you better through this form. I'm
+              especially interested in learning who to turn to when I need
+              advice about moving to a new city (which you may have lived in at
+              some point) or trying out new activities that you may be
+              interested in. Feel free to answer as much as you like — the more
+              details, the better! Without further ado, let's get started.
+            </FormDescription>
+          </div>
+        </div>
 
-          <motion.div
-            key={step}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            {currentStep.type === "intro" && (
-              <div className="whitespace-pre-wrap text-center text-lg font-medium">
-                {currentStep.content}
-              </div>
-            )}
+        <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium leading-none">
+              Terms of Data Use<span className="text-red-600">*</span>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              This is a personal project, and all the information you provide
+              will be used solely for my personal use. Your data will be stored
+              privately on my home computer and will not be shared publicly. If
+              you don't feel comfortable sharing this information, that's
+              completely fine!
+            </p>
+          </div>
+          <Switch
+            checked={termsAccepted}
+            onCheckedChange={setTermsAccepted}
+            aria-readonly
+          />
+        </div>
 
-            {currentStep.type === "tos" && (
-              <div>
-                <p className="text-lg font-medium">{currentStep.content}</p>
-                <p className="mt-4 text-sm text-muted-foreground">
-                  By continuing, you agree to our terms and conditions.
-                </p>
-                <div className="mt-6 flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="tosAccepted"
-                    checked={tosAccepted}
-                    onChange={() => setTosAccepted(!tosAccepted)}
-                    className="cursor-pointer"
-                  />
-                  <Label htmlFor="tosAccepted" className="select-none cursor-pointer">
-                    I accept the Terms of Data Use
-                  </Label>
-                </div>
-                <div className="mt-6 flex justify-between">
-                  <Button variant="secondary" onClick={exitForm}>
-                    Exit
-                  </Button>
-                  <Button onClick={nextStep} disabled={!tosAccepted}>
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-4">
+            <FormField
+              control={form.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    First Name<span className="text-red-600">*</span>
+                  </FormLabel>
+                  <FormControl
+                    className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                  >
+                    <Input placeholder="Jonathan" type="" {...field} />
+                  </FormControl>
 
-            {currentStep.type === "multi-input" && (
-              <div>
-                {currentStep.fields.map((field) => (
-                  <div key={field.id} className="mb-4">
-                    <Label htmlFor={field.id} className="text-xl font-semibold">
-                      {field.label}
-                    </Label>
-                    <Input
-                      id={field.id}
-                      type={field.inputType}
-                      placeholder={field.placeholder || ""}
-                      value={(formData[field.id] as string) || ""}
-                      onChange={(e) => handleMultiInputChange(field.id, e.target.value)}
-                      className="mt-2"
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="col-span-4">
+            <FormField
+              control={form.control}
+              name="middleNames"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Middle Name(s)</FormLabel>
+                  <FormControl
+                    className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                  >
+                    <Input placeholder="Rufus!?" type="" {...field} />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="col-span-4">
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Last Name<span className="text-red-600">*</span>
+                  </FormLabel>
+                  <FormControl
+                    className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                  >
+                    <Input placeholder="Samuel" type="" {...field} />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-6">
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem className="flex flex-col items-start">
+                  <FormLabel>
+                    Phone number<span className="text-red-600">*</span>
+                  </FormLabel>
+                  <FormControl
+                    className={`w-full ${
+                      !termsAccepted ? "disabled-overlay" : ""
+                    }`}
+                  >
+                    <PhoneInput
+                      placeholder="+91-8197604647"
+                      {...field}
+                      defaultCountry="IN"
                     />
-                  </div>
-                ))}
-              </div>
-            )}
+                  </FormControl>
+                  <FormDescription>
+                    Enter your primary phone number, ideally the one you use
+                    Whatsapp with.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="col-span-6">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Email<span className="text-red-600">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                      placeholder="your-email@gmail.com"
+                      type="email"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Enter your primary email. Ideally the one you check the
+                    most.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
 
-            {currentStep.type === "multi-select" && (
-              <div>
-                <h3 className="text-xl font-semibold">{currentStep.question}</h3>
-                <p className="mb-4 text-sm text-muted-foreground">{currentStep.secondaryHeading}</p>
-                <div className="grid grid-cols-2 gap-2 max-w-md">
-                  {currentStep.options.map((option) => {
-                    const selected = (formData[currentStep.id] as string[] | undefined)?.includes(option) ?? false;
-                    return (
-                      <label
-                        key={option}
-                        className={`cursor-pointer rounded-md border p-2 ${
-                          selected ? "bg-blue-500 text-white" : "bg-white text-gray-700"
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-4">
+            <FormField
+              control={form.control}
+              name="groups"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    How do we know each other?
+                    <span className="text-red-600">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <MultiSelector
+                      values={field.value}
+                      onValuesChange={field.onChange}
+                      loop
+                      className={`min-w-3xl ${
+                        !termsAccepted ? "disabled-overlay" : ""
+                      }`}
+                    >
+                      <MultiSelectorTrigger>
+                        <MultiSelectorInput placeholder="Select connection type" />
+                      </MultiSelectorTrigger>
+                      <MultiSelectorContent>
+                        <MultiSelectorList>
+                          <MultiSelectorItem value="Family">
+                            Family
+                          </MultiSelectorItem>
+                          <MultiSelectorItem value="Friends">
+                            Friends
+                          </MultiSelectorItem>
+                          <MultiSelectorItem value="Work">
+                            Work
+                          </MultiSelectorItem>
+                          <MultiSelectorItem value="School">
+                            School
+                          </MultiSelectorItem>
+                          <MultiSelectorItem value="College">
+                            College
+                          </MultiSelectorItem>
+                          <MultiSelectorItem value="Acquaintances">
+                            Acquaintances
+                          </MultiSelectorItem>
+                          <MultiSelectorItem value="WE JUST MET">
+                            WE JUST MET
+                          </MultiSelectorItem>
+                          <MultiSelectorItem value="Community">
+                            Community
+                          </MultiSelectorItem>
+                          <MultiSelectorItem value="Other">
+                            Other
+                          </MultiSelectorItem>
+                        </MultiSelectorList>
+                      </MultiSelectorContent>
+                    </MultiSelector>
+                  </FormControl>
+                  <FormDescription>
+                    Feel free to select as many that apply! Any 3rd places would
+                    go into Community (The Library, Through Sports, Online, etc)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <Separator className="my-4" />
+
+        <FormField
+          control={form.control}
+          name="birthday"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>
+                Add your Birthday!<span className="text-red-600">*</span>
+              </FormLabel>
+              <DatetimePicker
+                className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                {...field}
+                format={[["days", "months", "years"], []]}
+              />
+              <FormDescription>
+                Funnily enough this is what inspired me to build this project XD
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="anniversaries"
+          render={() => (
+            <FormItem>
+              <FormLabel>Special Dates & Descriptions</FormLabel>
+              <FormDescription>
+                Add any memorable dates along with a description.
+              </FormDescription>
+
+              {anniversaryFields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className={`mb-4 flex flex-col md:flex-row items-start md:items-center gap-2 ${
+                    !termsAccepted ? "disabled-overlay" : ""
+                  }`}
+                >
+                  {/* Label Input */}
+                  <FormControl>
+                    <Input
+                      placeholder="E.g. Wedding Anniversary"
+                      {...form.register(`anniversaries.${index}.label`)}
+                      className="w-full md:w-1/2"
+                    />
+                  </FormControl>
+
+                  {/* Date Picker */}
+                  <FormControl>
+                    <DatetimePicker
+                      {...form.register(`anniversaries.${index}.date` as const)}
+                      value={form.watch(`anniversaries.${index}.date`)}
+                      onChange={(val) =>
+                        form.setValue(
+                          `anniversaries.${index}.date`,
+                          val ?? new Date()
+                        )
+                      }
+                      format={[["days", "months", "years"], []]}
+                      className="w-full md:w-1/2"
+                    />
+                  </FormControl>
+
+                  {/* Remove Button */}
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => removeAnniversary(index)}
+                  >
+                    ✕
+                  </Button>
+                </div>
+              ))}
+
+              <Button
+                type="button"
+                variant="outline"
+                className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                onClick={() =>
+                  appendAnniversary({ label: "", date: new Date() })
+                }
+              >
+                + Add Row
+              </Button>
+
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Separator className="my-4" />
+
+        <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+          <div className="space-y-0.5">
+            <FormLabel>Your Work</FormLabel>
+            <FormDescription>
+              Completely Optional! But I'd still love to know more about what
+              you do!
+            </FormDescription>
+          </div>
+        </div>
+
+        <FormField
+          control={form.control}
+          name="company"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Current Company</FormLabel>
+              <FormControl>
+                <Input
+                  className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                  placeholder="CERN"
+                  type=""
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Enter the name of the current company you work in!
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-6">
+            <FormField
+              control={form.control}
+              name="jobTitle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Your Job Title</FormLabel>
+                  <FormControl
+                    className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                  >
+                    <Input placeholder="DevOps Engineer" type="" {...field} />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="col-span-6">
+            <FormField
+              control={form.control}
+              name="yoe"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Years of Experience</FormLabel>
+                  <FormControl
+                    className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                  >
+                    <Input placeholder="4" type="number" {...field} />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-12 gap-4">
+          {/* Other Phone Numbers */}
+          <div className="col-span-6 space-y-4">
+            {(form.watch("otherPhones") || []).map((_, index) => (
+              <FormField
+                key={index}
+                control={form.control}
+                name={`otherPhones.${index}`}
+                render={({ field }) => (
+                  <FormItem className="flex items-center">
+                    <div className="flex-1 space-y-2 flex flex-col">
+                      <FormLabel>Work Phone Number</FormLabel>
+                      <FormControl
+                        className={`w-full ${
+                          !termsAccepted ? "disabled-overlay" : ""
                         }`}
                       >
-                        <input
-                          type="checkbox"
-                          checked={selected}
-                          onChange={() => handleMultiSelectToggle(option)}
-                          className="mr-2 cursor-pointer"
+                        <PhoneInput
+                          placeholder="+41-22-766-67-59"
+                          {...field}
+                          defaultCountry="CH"
                         />
-                        {option}
-                      </label>
-                    );
-                  })}
-                </div>
-                {isNextDisabled() && (
-                  <p className="mt-2 text-red-600 text-sm">Please select at least one option.</p>
+                      </FormControl>
+                      <FormDescription>
+                        Your primary phone number (e.g. WhatsApp).
+                      </FormDescription>
+                      <FormMessage />
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      disabled={!termsAccepted}
+                      onClick={() => {
+                        const current = form.getValues("otherPhones") || [];
+                        const updated = [...current];
+                        updated.splice(index, 1);
+                        form.setValue("otherPhones", updated);
+                      }}
+                    >
+                      X
+                    </Button>
+                  </FormItem>
                 )}
-              </div>
-            )}
+              />
+            ))}
 
-            {currentStep.type === "additionalContacts" && (
-  <div>
-    <h2 className="text-xl font-semibold mb-4">Additional Contacts (Optional)</h2>
+            {/* Add Phone Button outside map for better UX */}
+            <Button
+              type="button"
+              onClick={() => {
+                const current = form.getValues("otherPhones") || [];
+                form.setValue("otherPhones", [...current, ""]);
+              }}
+              variant="outline"
+              className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+            >
+              + Add Phone
+            </Button>
+          </div>
 
-    {/* Additional Phone Numbers */}
-    <div className="mb-6">
-      <Label className="font-semibold">Additional Phone Numbers (max 3)</Label>
-      {((formData.additionalPhones as string[]) || []).map((phone, index) => (
-        <div key={`phone-${index}`} className="flex items-center space-x-2 mt-2">
-          <Input
-            type="tel"
-            placeholder={`Phone #${index + 1}`}
-            value={phone}
-            onChange={(e) => {
-              const newPhones = [...((formData.additionalPhones as string[]) || [])];
-              newPhones[index] = e.target.value;
-              setFormData({ ...formData, additionalPhones: newPhones });
-            }}
-            className="flex-grow"
-          />
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              const newPhones = [...((formData.additionalPhones as string[]) || [])];
-              newPhones.splice(index, 1);
-              setFormData({ ...formData, additionalPhones: newPhones });
-            }}
-          >
-            Delete
-          </Button>
+          {/* Other Emails */}
+          <div className="col-span-6 space-y-4">
+            {(form.watch("otherEmails") || []).map((_, index) => (
+              <FormField
+                key={index}
+                control={form.control}
+                name={`otherEmails.${index}`}
+                render={({ field }) => (
+                  <FormItem className="flex items-center">
+                    <div className="flex-1 space-y-2 flex flex-col">
+                      <FormLabel>Work Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          className={`${
+                            !termsAccepted ? "disabled-overlay" : ""
+                          }`}
+                          placeholder="jonathan.rufus.samuel@cern.ch"
+                          type="email"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        The email you check most often.
+                      </FormDescription>
+                      <FormMessage />
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      disabled={!termsAccepted}
+                      onClick={() => {
+                        const current = form.getValues("otherEmails") || [];
+                        const updated = [...current];
+                        updated.splice(index, 1);
+                        form.setValue("otherEmails", updated);
+                      }}
+                    >
+                      X
+                    </Button>
+                  </FormItem>
+                )}
+              />
+            ))}
+
+            {/* Add Email Button outside map */}
+            <Button
+              type="button"
+              onClick={() => {
+                const current = form.getValues("otherEmails") || [];
+                form.setValue("otherEmails", [...current, ""]);
+              }}
+              variant="outline"
+              className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+            >
+              + Add Email
+            </Button>
+          </div>
         </div>
-      ))}
-      <Button
-        variant="secondary"
-        className="mt-3"
-        onClick={() => {
-          const newPhones = [...((formData.additionalPhones as string[]) || [])];
-          if (newPhones.length < 3) {
-            newPhones.push("");
-            setFormData({ ...formData, additionalPhones: newPhones });
-          }
-        }}
-        disabled={((formData.additionalPhones as string[])?.length || 0) >= 3}
-      >
-        Add Phone Number
-      </Button>
-    </div>
 
-    {/* Additional Emails */}
-    <div>
-      <Label className="font-semibold">Additional Emails (max 3)</Label>
-      {((formData.additionalEmails as string[]) || []).map((email, index) => (
-        <div key={`email-${index}`} className="flex items-center space-x-2 mt-2">
-          <Input
-            type="email"
-            placeholder={`Email #${index + 1}`}
-            value={email}
-            onChange={(e) => {
-              const newEmails = [...((formData.additionalEmails as string[]) || [])];
-              newEmails[index] = e.target.value;
-              setFormData({ ...formData, additionalEmails: newEmails });
-            }}
-            className="flex-grow"
-          />
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              const newEmails = [...((formData.additionalEmails as string[]) || [])];
-              newEmails.splice(index, 1);
-              setFormData({ ...formData, additionalEmails: newEmails });
-            }}
-          >
-            Delete
-          </Button>
-        </div>
-      ))}
-      <Button
-        variant="secondary"
-        className="mt-3"
-        onClick={() => {
-          const newEmails = [...((formData.additionalEmails as string[]) || [])];
-          if (newEmails.length < 3) {
-            newEmails.push("");
-            setFormData({ ...formData, additionalEmails: newEmails });
-          }
-        }}
-        disabled={((formData.additionalEmails as string[])?.length || 0) >= 3}
-      >
-        Add Email
-      </Button>
-    </div>
-  </div>
-)}
-
-
-
-            {currentStep.type === "question" && (
-              <div>
-                <Label htmlFor={currentStep.id} className="text-xl font-semibold">
-                  {currentStep.label}
-                </Label>
-                <Input
-                  id={currentStep.id}
-                  type={currentStep.inputType}
-                  placeholder={currentStep.placeholder}
-                  value={formData[currentStep.id] || ""}
-                  onChange={handleChange}
-                  className="mt-4"
+        <FormField
+          control={form.control}
+          name="work"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Is there anything interesting that you work on?
+              </FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Feel free to mention something interesting that you work on! (Especially if it's within Computer Science XD)"
+                  className={`resize-none ${
+                    !termsAccepted ? "disabled-overlay" : ""
+                  }`}
+                  {...field}
                 />
-              </div>
-            )}
+              </FormControl>
 
-            {currentStep.type === "thankyou" && (
-              <div className="text-center space-y-4">
-                <h2 className="text-2xl font-bold">THANK YOU</h2>
-                <p>
-                  Thank you for taking out the time to answer this survey! If you'd like to know more about me, feel free to click this link:
-                </p>
-                <p>
-                  If you'd like to learn more about how I stay in touch with people, head over to this link:
-                </p>
-                <p>Thanks once again :)</p>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-                <div className="mt-6 flex justify-center space-x-4">
-                  <a
-                    href="https://linkedin.com/in/yourprofile"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition"
+        <FormField
+          control={form.control}
+          name="workLink"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Other Links</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="https://jrs-studios.web.cern.ch/"
+                  type=""
+                  className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                If you have a site that you think would be worth visitng, drop
+                it below!{" "}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Separator className="my-4" />
+
+        <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+          <div className="space-y-0.5">
+            <FormLabel>Your Global Footprint</FormLabel>
+            <FormDescription>
+              This was another important reason for building this. You'd be
+              surprised by how much of a global reach one may have, and I hope
+              to learn from you about the places you have been to, and the
+              places you would like to go to! Please do take the time to fill
+              out your previous addresses, as well as places that you have
+              visited. It's not a requirement, but it would be awesome to know!
+            </FormDescription>
+          </div>
+        </div>
+
+        <FormField
+          control={form.control}
+          name="address"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Address</FormLabel>
+              <FormControl>
+                <Input
+                  className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                  placeholder="115 Rue de Pouilly"
+                  type=""
+                  {...field}
+                />
+              </FormControl>
+
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-6">
+            <FormField
+              control={form.control}
+              name="address2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address Line 2</FormLabel>
+                  <FormControl
+                    className={`${!termsAccepted ? "disabled-overlay" : ""}`}
                   >
-                    LinkedIn
-                  </a>
-                  <a
-                    href="https://github.com/yourprofile"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition"
+                    <Input placeholder="" type="" {...field} />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="col-span-6">
+            <FormField
+              control={form.control}
+              name="postalCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Postal Code</FormLabel>
+                  <FormControl
+                    className={`${!termsAccepted ? "disabled-overlay" : ""}`}
                   >
-                    GitHub
-                  </a>
-                  <a
-                    href="https://yourportfolio.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition"
+                    <Input placeholder="01630" type="" {...field} />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-4">
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    City<span className="text-red-600">*</span>
+                  </FormLabel>
+                  <FormControl
+                    className={`${!termsAccepted ? "disabled-overlay" : ""}`}
                   >
-                    Portfolio
-                  </a>
+                    <Input
+                      placeholder="St-Genis Pouilly"
+                      type="text"
+                      {...field}
+                    />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="col-span-4">
+            <FormField
+              control={form.control}
+              name="state"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>State</FormLabel>
+                  <FormControl
+                    className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                  >
+                    <Input placeholder="01630" type="" {...field} />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="col-span-4">
+            <FormField
+              control={form.control}
+              name="country"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Country<span className="text-red-600">*</span>
+                  </FormLabel>
+                  <FormControl
+                    className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                  >
+                    <Input placeholder="01630" type="" {...field} />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <FormField
+          control={form.control}
+          name="previous"
+          render={() => (
+            <FormItem>
+              <FormLabel>Places You've Lived in Previously</FormLabel>
+              <FormDescription>
+                Add any place that you have lived in previously. It could be as
+                part of University, Internships, or even your childhood home!
+                Please do try to include as many as you can!
+              </FormDescription>
+
+              {previousFields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className={`flex items-center gap-2 mb-2 ${
+                    !termsAccepted ? "disabled-overlay" : ""
+                  }`}
+                >
+                  <FormControl>
+                    <Input
+                      placeholder="City"
+                      {...form.register(`previous.${index}.city`)}
+                      className="w-full"
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <Input
+                      placeholder="Country"
+                      {...form.register(`previous.${index}.country`)}
+                      className="w-full"
+                    />
+                  </FormControl>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => removePrevious(index)}
+                  >
+                    ✕
+                  </Button>
                 </div>
-              </div>
-            )}
+              ))}
 
-            {currentStep.type !== "tos" && currentStep.type !== "thankyou" && (
-              <div className="mt-6 flex justify-between">
-                <Button variant="secondary" onClick={prevStep} disabled={step === 0}>
-                  Back
-                </Button>
-                <Button onClick={nextStep} disabled={isNextDisabled()}>
-                  {currentStep.type === "question" && step === steps.length - 2
-                    ? "Submit"
-                    : step < steps.length - 1
-                    ? "Next"
-                    : "Finish"}
-                </Button>
-              </div>
-            )}
-          </motion.div>
-        </CardContent>
-      </Card>
-    </div>
+              <Button
+                type="button"
+                onClick={() => appendPrevious({ city: "", country: "" })}
+                variant="outline"
+                className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+              >
+                + Add a new City - Country
+              </Button>
+
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="dreamVacation"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                If you had to take a dream vacation, Where would it be?
+              </FormLabel>
+              <FormControl>
+                <Input
+                  className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                  placeholder="Tromsø - Norway"
+                  type=""
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Feel free to share it as City - Country. Eg: Barcelona - Spain.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="visited"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Other Places that you have visited
+                <span className="text-red-600">*</span>
+              </FormLabel>
+              <FormControl
+                className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+              >
+                <TagsInput
+                  value={field.value ?? []}
+                  onValueChange={field.onChange}
+                  placeholder="Enter your tags"
+                />
+              </FormControl>
+              <FormDescription>
+                Feel free to share it as City - Country. Eg: Barcelona - Spain.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Separator className="my-4" />
+
+        <FormField
+          control={form.control}
+          name="interests"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Interests and Hobbies</FormLabel>
+              <FormControl
+                className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+              >
+                <TagsInput
+                  value={field.value ?? []}
+                  onValueChange={field.onChange}
+                  placeholder="Enter your tags"
+                />
+              </FormControl>
+              <FormDescription>
+                Are there any interests or hobbies that you have? Enter them one
+                by one! Same format. Music - I play the Piano, Sports - I love
+                Football!
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Separator className="my-4" />
+
+        <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+          <div className="space-y-0.5">
+            <FormLabel>Socials</FormLabel>
+            <FormDescription>
+              And Last but not the least, your socials! I would love to connect
+              with you on these platforms. Feel free to share as many as you
+              like!
+            </FormDescription>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-6">
+            <FormField
+              control={form.control}
+              name="instagram"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Instagram</FormLabel>
+                  <FormControl>
+                    <Input
+                      className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                      placeholder="https://www.instagram.com/"
+                      type=""
+                      {...field}
+                    />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="col-span-6">
+            <FormField
+              control={form.control}
+              name="linkedin"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>LinkedIn</FormLabel>
+                  <FormControl>
+                    <Input
+                      className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                      placeholder="https://www.linkedin.com/in/jrs2002/"
+                      type=""
+                      {...field}
+                    />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-6">
+            <FormField
+              control={form.control}
+              name="discord"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Discord</FormLabel>
+                  <FormControl>
+                    <Input
+                      className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                      placeholder="JRS296"
+                      type=""
+                      {...field}
+                    />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="col-span-6">
+            <FormField
+              control={form.control}
+              name="reddit"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Reddit</FormLabel>
+                  <FormControl>
+                    <Input
+                      className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                      placeholder="u/jrs296"
+                      type=""
+                      {...field}
+                    />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-6">
+            <FormField
+              control={form.control}
+              name="github"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>GitHub</FormLabel>
+                  <FormControl>
+                    <Input
+                      className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                      placeholder="JRS296"
+                      type=""
+                      {...field}
+                    />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <FormField
+          control={form.control}
+          name="other"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Others</FormLabel>
+              <FormControl>
+                <Input
+                  className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                  placeholder="Facebook?"
+                  type=""
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Add any other socials you would like to stay connected through!
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Separator className="my-4" />
+
+        <div className="">
+          <FormLabel>Review Your Answers</FormLabel>
+          <FormDescription>Please Review All your Answers</FormDescription>
+        </div>
+
+        <Button type="submit">Submit</Button>
+      </form>
+    </Form>
   );
 }
