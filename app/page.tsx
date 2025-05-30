@@ -30,7 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { TagsInput } from "@/components/ui/tags-input";
 import { Separator } from "@/components/ui/separator";
 import { uploadFormData } from "./Utils/Supabase/service";
-import router from "next/router";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   firstName: z.string().min(1).nonempty("First name is required"),
@@ -78,6 +78,7 @@ const formSchema = z.object({
 
 export default function MyForm() {
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
