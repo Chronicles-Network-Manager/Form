@@ -52,7 +52,7 @@ const formSchema = z.object({
   ),
   company: z.string().min(1).optional(),
   jobTitle: z.string().min(1).optional(),
-  yoe: z.coerce.number().min(0, "Must be a non-negative number"),
+  yoe: z.coerce.number().min(1).optional(),
   work: z.string().optional(),
   workLink: z.string().min(1).optional(),
   address: z.string().min(1).optional(),
@@ -68,7 +68,12 @@ const formSchema = z.object({
       country: z.string(),
     })
   ),
-  visited: z.array(z.string()).nonempty("Please add at least one item"),
+  visited: z.array(
+    z.object({
+      city: z.string(),
+      country: z.string(),
+    })
+  ),
   interests: z.array(z.string()).optional(),
   instagram: z.string().min(1).optional(),
   linkedin: z.string().min(1).optional(),
@@ -103,7 +108,7 @@ export default function MyForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       groups: [],
-      visited: ["Paris - France"],
+      visited: [{ city: "", country: "" }],
       birthday: new Date(),
       previous: [{ city: "", country: "" }],
       anniversaries: [{ label: "", date: new Date() }],
@@ -121,14 +126,18 @@ export default function MyForm() {
     name: "anniversaries",
   });
 
+  const { control, register } = form;
   const {
     fields: previousFields,
     append: appendPrevious,
     remove: removePrevious,
-  } = useFieldArray({
-    control: form.control,
-    name: "previous",
-  });
+  } = useFieldArray({ control, name: "previous" });
+
+  const {
+    fields: visitedFields,
+    append: appendVisited,
+    remove: removeVisited,
+  } = useFieldArray({ control, name: "visited" });
 
   const otherPhones = form.watch("otherPhones") || [];
 
@@ -375,31 +384,31 @@ export default function MyForm() {
                         </MultiSelectorTrigger>
                         <MultiSelectorContent>
                           <MultiSelectorList>
-                            <MultiSelectorItem value="Family">
+                            <MultiSelectorItem value="FAMILY">
                               Family
                             </MultiSelectorItem>
-                            <MultiSelectorItem value="Friends">
+                            <MultiSelectorItem value="FRIENDS">
                               Friends
                             </MultiSelectorItem>
-                            <MultiSelectorItem value="Work">
+                            <MultiSelectorItem value="WORK">
                               Work
                             </MultiSelectorItem>
-                            <MultiSelectorItem value="School">
+                            <MultiSelectorItem value="SCHOOL">
                               School
                             </MultiSelectorItem>
-                            <MultiSelectorItem value="College">
+                            <MultiSelectorItem value="COLLEGE">
                               College
                             </MultiSelectorItem>
-                            <MultiSelectorItem value="Acquaintances">
+                            <MultiSelectorItem value="ACQUAINTANCES">
                               Acquaintances
                             </MultiSelectorItem>
                             <MultiSelectorItem value="WE JUST MET">
                               WE JUST MET
                             </MultiSelectorItem>
-                            <MultiSelectorItem value="Community">
+                            <MultiSelectorItem value="COMMUNITY">
                               Community
                             </MultiSelectorItem>
-                            <MultiSelectorItem value="Other">
+                            <MultiSelectorItem value="OTHER">
                               Other
                             </MultiSelectorItem>
                           </MultiSelectorList>
@@ -982,15 +991,12 @@ export default function MyForm() {
             )}
           />
 
-          <FormField
+          {/* <FormField
             control={form.control}
             name="visited"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
-                  Other Places that you have visited
-                  <span className="text-red-600">*</span>
-                </FormLabel>
+                <FormLabel></FormLabel>
                 <FormControl
                   className={`${!termsAccepted ? "disabled-overlay" : ""}`}
                 >
@@ -1001,9 +1007,68 @@ export default function MyForm() {
                   />
                 </FormControl>
                 <FormDescription>
+                  
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          /> */}
+
+          <FormField
+            control={form.control}
+            name="visited"
+            render={() => (
+              <FormItem>
+                <FormLabel>
+                  Other Places that you have visited
+                  <span className="text-red-600">*</span>
+                </FormLabel>
+                <FormDescription>
                   Feel free to share it as City - Country. Eg: Barcelona -
                   Spain.
                 </FormDescription>
+
+                {visitedFields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className={`flex flex-col md:flex-row items-start md:items-center gap-2 mb-2 ${
+                      !termsAccepted ? "disabled-overlay" : ""
+                    }`}
+                  >
+                    <FormControl>
+                      <Input
+                        placeholder="City"
+                        {...form.register(`previous.${index}.city`)}
+                        className="w-full"
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <Input
+                        placeholder="Country"
+                        {...form.register(`previous.${index}.country`)}
+                        className="w-full"
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => removeVisited(index)}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                ))}
+
+                <Button
+                  type="button"
+                  onClick={() => appendVisited({ city: "", country: "" })}
+                  variant="outline"
+                  className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                >
+                  + Add a new City - Country
+                </Button>
+
                 <FormMessage />
               </FormItem>
             )}
