@@ -1,9 +1,7 @@
-import { createClient } from "./client";
+import { createClient } from "@supabase/supabase-js";
 
 export async function uploadFormData(values: any) {
   console.log("Form values received:", values);
-
-  const supabase = createClient();
 
   const data = "test"
   const error = null;
@@ -15,4 +13,8 @@ export async function uploadFormData(values: any) {
     console.log("Fetched profile data:", data);
     return { data, error: null };
   }
+}
+
+export async function checkAuthStatus() {
+  
 }
