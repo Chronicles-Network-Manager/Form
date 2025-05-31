@@ -15,7 +15,7 @@ export default function Page() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      console.log("Session data:", session);
+      //console.log("Session data:", session);
       if (!session) {
         router.push("/auth");
       } else {

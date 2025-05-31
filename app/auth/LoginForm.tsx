@@ -212,6 +212,35 @@ export default function LoginForm({
     }
   };
 
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const sendEmailToUser = async () => {
+    setOtpLoading(true);
+    setMessage("");
+
+    if (!email) {
+      setMessage("Please enter a valid email.");
+      setOtpLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: "https://chronicles-form.netlify.app/form", // Optional: your redirect URL after click
+      },
+    });
+
+    if (error) {
+      setMessage(`Failed to send OTP: ${error.message}`);
+    } else {
+      setMessage(`OTP sent to ${email}. Please check your email.`);
+    }
+
+    setOtpLoading(false);
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -220,6 +249,7 @@ export default function LoginForm({
           <CardDescription>
             Hey there! To enter the form, please enter your email (the same one
             from which you received this link) and the OTP sent to your email.
+            In case you haven't received an email. You can request a new OTP. Just enter your email and click the button below.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -243,7 +273,7 @@ export default function LoginForm({
                 <div className="w-full flex items-center">
                   <InputOTP
                     required
-                    maxLength={6}
+                    maxLength={8}
                     className="justify-center"
                     value={otp}
                     onChange={(value) => setOtp(value)}
@@ -252,12 +282,14 @@ export default function LoginForm({
                       <InputOTPSlot index={0} />
                       <InputOTPSlot index={1} />
                       <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
                     </InputOTPGroup>
                     <InputOTPSeparator />
-                    <InputOTPGroup>
-                      <InputOTPSlot index={3} />
+                    <InputOTPGroup>                      
                       <InputOTPSlot index={4} />
                       <InputOTPSlot index={5} />
+                      <InputOTPSlot index={6} />
+                      <InputOTPSlot index={7} />
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
@@ -269,13 +301,23 @@ export default function LoginForm({
               </div>
             </div>
             {error && (
-              <div className="mt-4 text-center text-sm text-red-500">{error}</div>
+              <div className="mt-4 text-center text-sm text-red-500">
+                {error}
+              </div>
             )}
             <div className="mt-4 text-center text-sm">
-              OTP Expired?{" "}
+              {/* OTP Expired?{" "}
               <a href="#" className="underline underline-offset-4">
                 Request a new OTP
-              </a>
+              </a> */}
+              <Button
+                onClick={sendEmailToUser}
+                className="w-full"
+                variant={"outline"}
+                disabled={otpLoading}
+              >
+                {otpLoading ? "Sending OTP..." : "Request a new OTP"}
+              </Button>
             </div>
           </form>
         </CardContent>
