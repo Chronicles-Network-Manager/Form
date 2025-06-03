@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,8 +31,9 @@ import { TagsInput } from "@/components/ui/tags-input";
 import { Separator } from "@/components/ui/separator";
 import { uploadFormData } from "./../Utils/Supabase/service";
 import { useRouter } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { supabase } from "../Utils/Supabase/client";
+import { GeoapifyAutocomplete } from "./GeoapifyAutocomplete";
+import { GeoapifyTagInput } from "./GeoapifyTagsInput";
 
 const formSchema = z.object({
   firstName: z.string().min(1).nonempty("First name is required"),
@@ -55,26 +56,43 @@ const formSchema = z.object({
   yoe: z.coerce.number().min(1).optional(),
   work: z.string().optional(),
   workLink: z.string().min(1).optional(),
-  address: z.string().min(1).optional(),
-  address2: z.string().min(1).optional(),
-  city: z.string().min(1),
-  postalCode: z.string().min(1).optional(),
-  state: z.string().min(1).optional(),
-  country: z.string().min(1),
+  otherAddress: z.string().min(1).optional(),
+  currentLocation: z.array(
+    z.object({
+      city: z.string(),
+      country: z.string(),
+      state: z.string().optional(),
+      latitude: z.coerce.number(),
+      longitude: z.coerce.number(),
+      formatted: z.string(),
+      address: z.string(),
+      address2: z.string(),
+      postcode: z.string(),
+    })
+  ),
   dreamVacation: z.string().min(1).optional(),
-  previous: z.array(
-    z.object({
-      city: z.string(),
-      country: z.string(),
-    })
-  ),
-  visited: z.array(
-    z.object({
-      city: z.string(),
-      country: z.string(),
-    })
-  ),
+  previous: z
+    .array(
+      z.object({
+        city: z.string(),
+        country: z.string(),
+        latitude: z.coerce.number(),
+        longitude: z.coerce.number(),
+      })
+    )
+    .optional(),
+  visited: z
+    .array(
+      z.object({
+        city: z.string(),
+        country: z.string(),
+        latitude: z.coerce.number(),
+        longitude: z.coerce.number(),
+      })
+    )
+    .optional(),
   interests: z.array(z.string()).optional(),
+  favourites: z.string().optional(),
   instagram: z.string().min(1).optional(),
   linkedin: z.string().min(1).optional(),
   github: z.string().min(1).optional(),
@@ -108,9 +126,9 @@ export default function MyForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       groups: [],
-      visited: [{ city: "", country: "" }],
+      // visited: [],
       birthday: new Date(),
-      previous: [{ city: "", country: "" }],
+      // previous: [],
       anniversaries: [{ label: "", date: new Date() }],
       otherPhones: [""],
       otherEmails: [""],
@@ -125,43 +143,6 @@ export default function MyForm() {
     control: form.control,
     name: "anniversaries",
   });
-
-  const { control, register } = form;
-  const {
-    fields: previousFields,
-    append: appendPrevious,
-    remove: removePrevious,
-  } = useFieldArray({ control, name: "previous" });
-
-  const {
-    fields: visitedFields,
-    append: appendVisited,
-    remove: removeVisited,
-  } = useFieldArray({ control, name: "visited" });
-
-  const otherPhones = form.watch("otherPhones") || [];
-
-  const addPhone = () => {
-    form.setValue("otherPhones", [...otherPhones, ""]);
-  };
-
-  const removePhone = (index: number) => {
-    const updated = [...otherPhones];
-    updated.splice(index, 1);
-    form.setValue("otherPhones", updated);
-  };
-
-  const otherEmails = form.watch("otherEmails") || [];
-
-  const addEmail = () => {
-    form.setValue("otherEmails", [...otherEmails, ""]);
-  };
-
-  const removeEmail = (index: number) => {
-    const updated = [...otherPhones];
-    updated.splice(index, 1);
-    form.setValue("otherEmails", updated);
-  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
@@ -783,188 +764,74 @@ export default function MyForm() {
 
           <FormField
             control={form.control}
-            name="address"
+            name="currentLocation"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Address</FormLabel>
+                <FormLabel>
+                  Your Address<span className="text-red-600">*</span>
+                </FormLabel>
+                <FormControl className={`${!termsAccepted ? "disabled-overlay" : ""}`}>
+                  <GeoapifyAutocomplete
+                    value={field.value || []}
+                    onChange={field.onChange}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Add your current address. If you would not like to share your
+                  complete address, please mention your current city, that would
+                  do.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="otherAddress"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Other Address Details</FormLabel>
                 <FormControl>
                   <Input
                     className={`${!termsAccepted ? "disabled-overlay" : ""}`}
-                    placeholder="115 Rue de Pouilly"
+                    placeholder="Add other details about your address"
                     type=""
                     {...field}
                   />
                 </FormControl>
-
+                <FormDescription>
+                  If the prompt from the address search isn't as accurate, feel free to share any other details here.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-6">
-              <FormField
-                control={form.control}
-                name="address2"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address Line 2</FormLabel>
-                    <FormControl
-                      className={`${!termsAccepted ? "disabled-overlay" : ""}`}
-                    >
-                      <Input placeholder="" type="" {...field} />
-                    </FormControl>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="md:col-span-6">
-              <FormField
-                control={form.control}
-                name="postalCode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Postal Code</FormLabel>
-                    <FormControl
-                      className={`${!termsAccepted ? "disabled-overlay" : ""}`}
-                    >
-                      <Input placeholder="01630" type="" {...field} />
-                    </FormControl>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-4">
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      City<span className="text-red-600">*</span>
-                    </FormLabel>
-                    <FormControl
-                      className={`${!termsAccepted ? "disabled-overlay" : ""}`}
-                    >
-                      <Input
-                        placeholder="St-Genis Pouilly"
-                        type="text"
-                        {...field}
-                      />
-                    </FormControl>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="md:col-span-4">
-              <FormField
-                control={form.control}
-                name="state"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>State</FormLabel>
-                    <FormControl
-                      className={`${!termsAccepted ? "disabled-overlay" : ""}`}
-                    >
-                      <Input placeholder="01630" type="" {...field} />
-                    </FormControl>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="md:col-span-4">
-              <FormField
-                control={form.control}
-                name="country"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Country<span className="text-red-600">*</span>
-                    </FormLabel>
-                    <FormControl
-                      className={`${!termsAccepted ? "disabled-overlay" : ""}`}
-                    >
-                      <Input placeholder="01630" type="" {...field} />
-                    </FormControl>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
 
           <FormField
             control={form.control}
             name="previous"
-            render={() => (
+            render={({ field }) => (
               <FormItem>
-                <FormLabel>Places You've Lived in Previously</FormLabel>
+                <FormLabel>
+                  Previously Lived<span className="text-red-600">*</span>
+                </FormLabel>
+                <FormControl className={`${!termsAccepted ? "disabled-overlay" : ""}`}>
+                  <GeoapifyTagInput
+                    value={field.value || []}
+                    onChange={field.onChange}
+                  />
+                </FormControl>
                 <FormDescription>
-                  Add any place that you have lived in previously. It could be
-                  as part of University, Internships, or even your childhood
-                  home! Please do try to include as many as you can!
+                  Add previous locations you've lived in. These could be places
+                  you've done internships at, your childhood home, etc.
+                  Basically any place that you've lived in for more than 6
+                  months.
                 </FormDescription>
-
-                {previousFields.map((field, index) => (
-                  <div
-                    key={field.id}
-                    className={`flex flex-col md:flex-row items-start md:items-center gap-2 mb-2 ${
-                      !termsAccepted ? "disabled-overlay" : ""
-                    }`}
-                  >
-                    <FormControl>
-                      <Input
-                        placeholder="City"
-                        {...form.register(`previous.${index}.city`)}
-                        className="w-full"
-                      />
-                    </FormControl>
-                    <FormControl>
-                      <Input
-                        placeholder="Country"
-                        {...form.register(`previous.${index}.country`)}
-                        className="w-full"
-                      />
-                    </FormControl>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => removePrevious(index)}
-                    >
-                      ✕
-                    </Button>
-                  </div>
-                ))}
-
-                <Button
-                  type="button"
-                  onClick={() => appendPrevious({ city: "", country: "" })}
-                  variant="outline"
-                  className={`${!termsAccepted ? "disabled-overlay" : ""}`}
-                >
-                  + Add a new City - Country
-                </Button>
-
                 <FormMessage />
               </FormItem>
             )}
-          />
+          />          
 
           <FormField
             control={form.control}
@@ -991,88 +858,29 @@ export default function MyForm() {
             )}
           />
 
-          {/* <FormField
+          <FormField
             control={form.control}
             name="visited"
             render={({ field }) => (
               <FormItem>
-                <FormLabel></FormLabel>
-                <FormControl
-                  className={`${!termsAccepted ? "disabled-overlay" : ""}`}
-                >
-                  <TagsInput
-                    value={field.value ?? []}
-                    onValueChange={field.onChange}
-                    placeholder="Enter your tags"
+                <FormLabel>
+                  Visited Places<span className="text-red-600">*</span>
+                </FormLabel>
+                <FormControl className={`${!termsAccepted ? "disabled-overlay" : ""}`}>
+                  <GeoapifyTagInput
+                    value={field.value || []}
+                    onChange={field.onChange}
                   />
                 </FormControl>
                 <FormDescription>
-                  
+                  Add all the places that you have visited. Please do try adding
+                  as many as you can! And kindly note the distintion between
+                  places visited and lived in previously.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
-          /> */}
-
-          <FormField
-            control={form.control}
-            name="visited"
-            render={() => (
-              <FormItem>
-                <FormLabel>
-                  Other Places that you have visited
-                  <span className="text-red-600">*</span>
-                </FormLabel>
-                <FormDescription>
-                  Feel free to share it as City - Country. Eg: Barcelona -
-                  Spain.
-                </FormDescription>
-
-                {visitedFields.map((field, index) => (
-                  <div
-                    key={field.id}
-                    className={`flex flex-col md:flex-row items-start md:items-center gap-2 mb-2 ${
-                      !termsAccepted ? "disabled-overlay" : ""
-                    }`}
-                  >
-                    <FormControl>
-                      <Input
-                        placeholder="City"
-                        {...form.register(`previous.${index}.city`)}
-                        className="w-full"
-                      />
-                    </FormControl>
-                    <FormControl>
-                      <Input
-                        placeholder="Country"
-                        {...form.register(`previous.${index}.country`)}
-                        className="w-full"
-                      />
-                    </FormControl>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => removeVisited(index)}
-                    >
-                      ✕
-                    </Button>
-                  </div>
-                ))}
-
-                <Button
-                  type="button"
-                  onClick={() => appendVisited({ city: "", country: "" })}
-                  variant="outline"
-                  className={`${!termsAccepted ? "disabled-overlay" : ""}`}
-                >
-                  + Add a new City - Country
-                </Button>
-
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          />          
 
           <Separator className="my-4" />
 
@@ -1095,6 +903,29 @@ export default function MyForm() {
                   Are there any interests or hobbies that you have? Enter them
                   one by one! Same format. Music - I play the Piano, Sports - I
                   love Football!
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="favourites"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Favourites and Extras</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Type away!"
+                    className={`resize-none ${!termsAccepted ? "disabled-overlay" : ""}`}
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Add anything that you've loved recently! (Or for a long time).
+                  A favourite book, TV Show, A Spotify Platylist that you really
+                  like. Feel free to drop anything you like here!
                 </FormDescription>
                 <FormMessage />
               </FormItem>

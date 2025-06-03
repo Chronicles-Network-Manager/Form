@@ -16,17 +16,14 @@ type FormValues = {
   anniversaries?: { label?: string; date?: Date }[];
   groups: string[];
   interests?: string[];
+  favourites?: string;
   yoe?: number;
-  workLink?: string;
-  address?: string;
-  address2?: string;
-  city: string;
-  postalCode?: string;
-  state?: string;
-  country: string;
+  workLink?: string;  
+  otherAddress?: string;
+  currentLocation: { city: string; country: string, state?: string, latitude: number, longitude: number, formatted: string, address: string, address2: string, postcode: string }[];
   dreamVacation?: string;
-  previous: { city: string; country: string }[];
-  visited: { city: string; country: string }[];
+  previous?: { city: string; country: string, latitude: number, longitude: number }[];
+  visited?: { city: string; country: string, latitude: number, longitude: number }[];
   instagram?: string;
   linkedin?: string;
   github?: string;
@@ -73,6 +70,7 @@ export async function uploadFormData(values: FormValues) {
         interests: values.interests ?? [],
         yoe: values.yoe ?? null,
         workLink: values.workLink ?? null,
+        favourites: values.favourites ?? null,
       };
 
       //console.log("📦 Inserting new contact with payload:", insertPayload);
@@ -136,17 +134,18 @@ export async function uploadFormData(values: FormValues) {
 const insertLocations = async (userId: string, values: FormValues) => {
   // Insert CURRENT location if at least one address field is non-null/non-empty
   if (
-    values.address || values.address2 || values.city ||
-    values.postalCode || values.state || values.country
+    values.currentLocation
   ) {
     const currentLocationPayload = {
       userId,
-      address: values.address ?? null,
-      address2: values.address2 ?? null,
-      city: values.city ?? null,
-      postalcode: values.postalCode ?? null,
-      state: values.state ?? null,
-      country: values.country ?? null,
+      address: values.currentLocation[0].address ?? null,
+      address2: values.currentLocation[0].address2 ?? null,
+      city: values.currentLocation[0].city ?? null,
+      postalcode: values.currentLocation[0].postcode ?? null,
+      state: values.currentLocation[0].state ?? null,
+      country: values.currentLocation[0].country ?? null,
+      latitude: values.currentLocation[0].latitude ?? 0,
+      longitude: values.currentLocation[0].longitude ?? 0,
       type: "CURRENT",
     };
     //console.log("📍 Inserting CURRENT location:", currentLocationPayload);
@@ -168,6 +167,8 @@ const insertLocations = async (userId: string, values: FormValues) => {
           postalcode: null,
           state: null,
           country: prev.country,
+          latitude: prev.latitude ?? 0,
+          longitude: prev.longitude ?? 0,
           type: "PREVIOUS",
         };
         //console.log("📍 Inserting PREVIOUS location:", previousPayload);
@@ -191,6 +192,8 @@ const insertLocations = async (userId: string, values: FormValues) => {
           postalcode: null,
           state: null,
           country: visit.country,
+          latitude: visit.latitude ?? 0,
+          longitude: visit.longitude ?? 0,
           type: "VISITED",
         };
         //console.log("📍 Inserting VISITED location:", visitedPayload);
