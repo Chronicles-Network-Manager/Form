@@ -182,6 +182,7 @@ export default function LoginForm({
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [otpRequested, setOtpRequested] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -215,9 +216,13 @@ export default function LoginForm({
   const [otpLoading, setOtpLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const sendEmailToUser = async () => {
+  const sendEmailToUser = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     setOtpLoading(true);
     setMessage("");
+    setError("");
 
     if (!email) {
       setMessage("Please enter a valid email.");
@@ -234,11 +239,20 @@ export default function LoginForm({
 
     if (error) {
       setMessage(`Failed to send OTP: ${error.message}`);
+      setOtpRequested(false);
     } else {
       setMessage(`OTP sent to ${email}. Please check your email.`);
+      setOtpRequested(true);
     }
 
     setOtpLoading(false);
+  };
+
+  const handleBackToEmail = () => {
+    setOtpRequested(false);
+    setOtp("");
+    setMessage("");
+    setError("");
   };
 
   return (
@@ -247,79 +261,123 @@ export default function LoginForm({
         <CardHeader>
           <CardTitle>Chronicles</CardTitle>
           <CardDescription>
-            Hey there! To enter the form, please enter your email (the same one
-            from which you received this link) and the OTP sent to your email.
-            In case you haven't received an email. You can request a new OTP. Just enter your email and click the button below.
+            {!otpRequested
+              ? "Hey there! To enter the form, please enter your email address. We'll send you an OTP to verify your identity. We recommend that you access this form on your laptop rather than your mobile device."
+              : `OTP has been sent to ${email}. If you are a fisrt time user, you may receive an email to confirm your email address. Please enter the OTP you received, or in case of the confirmation link, please click on the link to continue.`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-3">
-                <div className="flex items-center">
-                  <Label htmlFor="password">OTP</Label>
-                </div>
-                <div className="w-full flex items-center">
-                  <InputOTP
+          {!otpRequested ? (
+            // Step 1: Email Input
+            <form onSubmit={sendEmailToUser}>
+              <div className="flex flex-col gap-6">
+                <div className="grid gap-3">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
                     required
-                    maxLength={8}
-                    className="justify-center"
-                    value={otp}
-                    onChange={(value) => setOtp(value)}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={otpLoading}
+                  />
+                </div>
+                <div className="flex flex-col gap-3">
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={otpLoading}
                   >
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} />
-                      <InputOTPSlot index={1} />
-                      <InputOTPSlot index={2} />
-                      <InputOTPSlot index={3} />
-                    </InputOTPGroup>
-                    <InputOTPSeparator />
-                    <InputOTPGroup>                      
-                      <InputOTPSlot index={4} />
-                      <InputOTPSlot index={5} />
-                      <InputOTPSlot index={6} />
-                      <InputOTPSlot index={7} />
-                    </InputOTPGroup>
-                  </InputOTP>
+                    {otpLoading ? "Sending OTP..." : "Request OTP"}
+                  </Button>
+                </div>
+                {message && (
+                  <div
+                    className={`text-center text-sm ${
+                      message.includes("Failed")
+                        ? "text-red-500"
+                        : "text-green-600"
+                    }`}
+                  >
+                    {message}
+                  </div>
+                )}
+              </div>
+            </form>
+          ) : (
+            // Step 2: OTP Input
+            <form onSubmit={handleSubmit}>
+              <div className="flex flex-col gap-6">
+                <div className="grid gap-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="otp">OTP</Label>
+                    <button
+                      type="button"
+                      onClick={handleBackToEmail}
+                      className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
+                    >
+                      Change Email
+                    </button>
+                  </div>
+                  <div className="w-full flex items-center">
+                    <InputOTP
+                      required
+                      maxLength={8}
+                      className="justify-center"
+                      value={otp}
+                      onChange={(value) => setOtp(value)}
+                      disabled={loading}
+                    >
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} />
+                        <InputOTPSlot index={1} />
+                        <InputOTPSlot index={2} />
+                        <InputOTPSlot index={3} />
+                      </InputOTPGroup>
+                      <InputOTPSeparator />
+                      <InputOTPGroup>
+                        <InputOTPSlot index={4} />
+                        <InputOTPSlot index={5} />
+                        <InputOTPSlot index={6} />
+                        <InputOTPSlot index={7} />
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loading}
+                  >
+                    {loading ? "Verifying..." : "Enter The Form!"}
+                  </Button>
+                </div>
+                {error && (
+                  <div className="text-center text-sm text-red-500">
+                    {error}
+                  </div>
+                )}
+                {message && (
+                  <div className="text-center text-sm text-green-600">
+                    {message}
+                  </div>
+                )}
+                <div className="mt-2 text-center text-sm">
+                  <Button
+                    type="button"
+                    onClick={sendEmailToUser}
+                    variant={"outline"}
+                    className="w-full"
+                    disabled={otpLoading}
+                  >
+                    {otpLoading ? "Sending OTP..." : "Resend OTP"}
+                  </Button>
                 </div>
               </div>
-              <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Verifying..." : "Enter The Form!"}
-                </Button>
-              </div>
-            </div>
-            {error && (
-              <div className="mt-4 text-center text-sm text-red-500">
-                {error}
-              </div>
-            )}
-            <div className="mt-4 text-center text-sm">
-              {/* OTP Expired?{" "}
-              <a href="#" className="underline underline-offset-4">
-                Request a new OTP
-              </a> */}
-              <Button
-                onClick={sendEmailToUser}
-                className="w-full"
-                variant={"outline"}
-                disabled={otpLoading}
-              >
-                {otpLoading ? "Sending OTP..." : "Request a new OTP"}
-              </Button>
-            </div>
-          </form>
+            </form>
+          )}
         </CardContent>
       </Card>
     </div>
