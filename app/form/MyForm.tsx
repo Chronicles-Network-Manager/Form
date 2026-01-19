@@ -178,12 +178,12 @@ export default function MyForm() {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-8 max-w-3xl mx-auto py-4 md:py-10 px-4"
+          className="space-y-6 sm:space-y-8 max-w-3xl mx-auto py-4 md:py-10 px-4 sm:px-6"
         >
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-lg border p-4 gap-4 md:gap-0">
-            <div className="space-y-0.5">
-              <FormLabel>Hey there {}!</FormLabel>
-              <FormDescription className="text-sm md:text-base">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-lg border p-4 sm:p-6 gap-4 md:gap-0">
+            <div className="space-y-0.5 w-full">
+              <FormLabel className="text-base sm:text-lg">Hey there {}!</FormLabel>
+              <FormDescription className="text-xs sm:text-sm md:text-base leading-relaxed">
                 Hi! I'm Jonathan. Whether we're old friends or new
                 acquaintances, I'd love to get to know you better through this
                 form. I'm especially interested in learning who to turn to when
@@ -196,12 +196,12 @@ export default function MyForm() {
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-lg border p-4 gap-4 md:gap-0">
-            <div className="space-y-0.5 flex-1">
-              <p className="text-sm font-medium leading-none">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-lg border p-4 sm:p-6 gap-4 md:gap-0">
+            <div className="space-y-0.5 flex-1 w-full">
+              <p className="text-sm sm:text-base font-medium leading-none">
                 Terms of Data Use<span className="text-red-600">*</span>
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
                 This is a personal project, and all the information you provide
                 will be used solely for my personal use. Your data will be
                 stored privately on my home computer and will not be shared
@@ -213,18 +213,18 @@ export default function MyForm() {
               checked={termsAccepted}
               onCheckedChange={setTermsAccepted}
               aria-readonly
-              className="mt-2 md:mt-0 md:ml-4"
+              className="mt-2 md:mt-0 md:ml-4 shrink-0"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4">
+            <div className="sm:col-span-1 md:col-span-4">
               <FormField
                 control={form.control}
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="text-sm sm:text-base">
                       First Name<span className="text-red-600">*</span>
                     </FormLabel>
                     <FormControl
@@ -239,13 +239,13 @@ export default function MyForm() {
               />
             </div>
 
-            <div className="md:col-span-4">
+            <div className="sm:col-span-1 md:col-span-4">
               <FormField
                 control={form.control}
                 name="middleNames"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Middle Name(s)</FormLabel>
+                    <FormLabel className="text-sm sm:text-base">Middle Name(s)</FormLabel>
                     <FormControl
                       className={`${!termsAccepted ? "disabled-overlay" : ""}`}
                     >
@@ -258,13 +258,13 @@ export default function MyForm() {
               />
             </div>
 
-            <div className="md:col-span-4">
+            <div className="sm:col-span-1 sm:col-start-1 md:col-span-4 md:col-start-9">
               <FormField
                 control={form.control}
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="text-sm sm:text-base">
                       Last Name<span className="text-red-600">*</span>
                     </FormLabel>
                     <FormControl
@@ -280,14 +280,14 @@ export default function MyForm() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4">
+            <div className="sm:col-span-1 md:col-span-6">
               <FormField
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
                   <FormItem className="flex flex-col items-start">
-                    <FormLabel>
+                    <FormLabel className="text-sm sm:text-base">
                       Phone number<span className="text-red-600">*</span>
                     </FormLabel>
                     <FormControl
@@ -301,7 +301,7 @@ export default function MyForm() {
                         defaultCountry="IN"
                       />
                     </FormControl>
-                    <FormDescription>
+                    <FormDescription className="text-xs sm:text-sm">
                       Enter your primary phone number, ideally the one you use
                       Whatsapp with.
                     </FormDescription>
@@ -310,13 +310,13 @@ export default function MyForm() {
                 )}
               />
             </div>
-            <div className="md:col-span-6">
+            <div className="sm:col-span-1 md:col-span-6">
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="text-sm sm:text-base">
                       Email<span className="text-red-600">*</span>
                     </FormLabel>
                     <FormControl>
@@ -324,12 +324,12 @@ export default function MyForm() {
                         className={`${
                           !termsAccepted ? "disabled-overlay" : ""
                         }`}
-                        placeholder="your-email@gmail.com"
+                        placeholder="jonathansamuel296@gmail.com"
                         type="email"
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
+                    <FormDescription className="text-xs sm:text-sm">
                       Enter your primary email. Ideally the one you check the
                       most.
                     </FormDescription>
@@ -341,13 +341,13 @@ export default function MyForm() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-4">
+            <div className="md:col-span-4 lg:col-span-4">
               <FormField
                 control={form.control}
                 name="groups"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="text-sm sm:text-base">
                       How do we know each other?
                       <span className="text-red-600">*</span>
                     </FormLabel>
@@ -396,7 +396,7 @@ export default function MyForm() {
                         </MultiSelectorContent>
                       </MultiSelector>
                     </FormControl>
-                    <FormDescription>
+                    <FormDescription className="text-xs sm:text-sm">
                       Feel free to select as many that apply! Any 3rd places
                       would go into Community (The Library, Through Sports,
                       Online, etc)
@@ -415,7 +415,7 @@ export default function MyForm() {
             name="birthday"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>
+                <FormLabel className="text-sm sm:text-base">
                   Add your Birthday!<span className="text-red-600">*</span>
                 </FormLabel>
                 <DatetimePicker
@@ -423,7 +423,7 @@ export default function MyForm() {
                   {...field}
                   format={[["days", "months", "years"], []]}
                 />
-                <FormDescription>
+                <FormDescription className="text-xs sm:text-sm">
                   Funnily enough this is what inspired me to build this project
                   XD
                 </FormDescription>
@@ -437,29 +437,29 @@ export default function MyForm() {
             name="anniversaries"
             render={() => (
               <FormItem>
-                <FormLabel>Special Dates & Descriptions</FormLabel>
-                <FormDescription>
+                <FormLabel className="text-sm sm:text-base">Special Dates & Descriptions</FormLabel>
+                <FormDescription className="text-xs sm:text-sm">
                   Add any memorable dates along with a description.
                 </FormDescription>
 
                 {anniversaryFields.map((field, index) => (
                   <div
                     key={field.id}
-                    className={`mb-4 flex flex-col md:flex-row items-start md:items-center gap-2 ${
+                    className={`mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 ${
                       !termsAccepted ? "disabled-overlay" : ""
                     }`}
                   >
                     {/* Label Input */}
-                    <FormControl>
+                    <FormControl className="w-full sm:flex-1">
                       <Input
                         placeholder="E.g. Wedding Anniversary"
                         {...form.register(`anniversaries.${index}.label`)}
-                        className="w-full md:w-1/2"
+                        className="w-full"
                       />
                     </FormControl>
 
                     {/* Date Picker */}
-                    <FormControl>
+                    <FormControl className="w-full sm:flex-1">
                       <DatetimePicker
                         {...form.register(
                           `anniversaries.${index}.date` as const
@@ -472,7 +472,7 @@ export default function MyForm() {
                           )
                         }
                         format={[["days", "months", "years"], []]}
-                        className="w-full md:w-1/2"
+                        className="w-full"
                       />
                     </FormControl>
 
@@ -491,7 +491,7 @@ export default function MyForm() {
                 <Button
                   type="button"
                   variant="outline"
-                  className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                  className={`w-full sm:w-auto ${!termsAccepted ? "disabled-overlay" : ""}`}
                   onClick={() =>
                     appendAnniversary({ label: "", date: new Date() })
                   }
@@ -506,10 +506,10 @@ export default function MyForm() {
 
           <Separator className="my-4" />
 
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-lg border p-4 gap-4 md:gap-0">
-            <div className="space-y-0.5">
-              <FormLabel>Your Work</FormLabel>
-              <FormDescription>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-lg border p-4 sm:p-6 gap-4 md:gap-0">
+            <div className="space-y-0.5 w-full">
+              <FormLabel className="text-base sm:text-lg">Your Work</FormLabel>
+              <FormDescription className="text-xs sm:text-sm md:text-base">
                 Completely Optional! But I'd still love to know more about what
                 you do!
               </FormDescription>
@@ -521,7 +521,7 @@ export default function MyForm() {
             name="company"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Current Company</FormLabel>
+                <FormLabel className="text-sm sm:text-base">Current Company</FormLabel>
                 <FormControl>
                   <Input
                     className={`${!termsAccepted ? "disabled-overlay" : ""}`}
@@ -530,7 +530,7 @@ export default function MyForm() {
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-xs sm:text-sm">
                   Enter the name of the current company you work in!
                 </FormDescription>
                 <FormMessage />
@@ -538,14 +538,14 @@ export default function MyForm() {
             )}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4">
+            <div className="sm:col-span-1 md:col-span-6">
               <FormField
                 control={form.control}
                 name="jobTitle"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Your Job Title</FormLabel>
+                    <FormLabel className="text-sm sm:text-base">Your Job Title</FormLabel>
                     <FormControl
                       className={`${!termsAccepted ? "disabled-overlay" : ""}`}
                     >
@@ -558,13 +558,13 @@ export default function MyForm() {
               />
             </div>
 
-            <div className="md:col-span-6">
+            <div className="sm:col-span-1 md:col-span-6">
               <FormField
                 control={form.control}
                 name="yoe"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Years of Experience</FormLabel>
+                    <FormLabel className="text-sm sm:text-base">Years of Experience</FormLabel>
                     <FormControl
                       className={`${!termsAccepted ? "disabled-overlay" : ""}`}
                     >
@@ -587,9 +587,9 @@ export default function MyForm() {
                   control={form.control}
                   name={`otherPhones.${index}`}
                   render={({ field }) => (
-                    <FormItem className="flex items-center">
-                      <div className="flex-1 space-y-2 flex flex-col">
-                        <FormLabel>Work Phone Number</FormLabel>
+                    <FormItem className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                      <div className="flex-1 space-y-2 flex flex-col w-full">
+                        <FormLabel className="text-sm sm:text-base">Work Phone Number</FormLabel>
                         <FormControl
                           className={`w-full ${
                             !termsAccepted ? "disabled-overlay" : ""
@@ -601,7 +601,7 @@ export default function MyForm() {
                             defaultCountry="CH"
                           />
                         </FormControl>
-                        <FormDescription>
+                        <FormDescription className="text-xs sm:text-sm">
                           Your primary phone number (e.g. WhatsApp).
                         </FormDescription>
                         <FormMessage />
@@ -617,6 +617,7 @@ export default function MyForm() {
                           updated.splice(index, 1);
                           form.setValue("otherPhones", updated);
                         }}
+                        className="shrink-0 w-full sm:w-auto"
                       >
                         X
                       </Button>
@@ -633,7 +634,7 @@ export default function MyForm() {
                   form.setValue("otherPhones", [...current, ""]);
                 }}
                 variant="outline"
-                className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                className={`w-full sm:w-auto ${!termsAccepted ? "disabled-overlay" : ""}`}
               >
                 + Add Phone
               </Button>
@@ -647,9 +648,9 @@ export default function MyForm() {
                   control={form.control}
                   name={`otherEmails.${index}`}
                   render={({ field }) => (
-                    <FormItem className="flex items-center">
-                      <div className="flex-1 space-y-2 flex flex-col">
-                        <FormLabel>Work Email</FormLabel>
+                    <FormItem className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                      <div className="flex-1 space-y-2 flex flex-col w-full">
+                        <FormLabel className="text-sm sm:text-base">Work Email</FormLabel>
                         <FormControl>
                           <Input
                             className={`${
@@ -660,7 +661,7 @@ export default function MyForm() {
                             {...field}
                           />
                         </FormControl>
-                        <FormDescription>
+                        <FormDescription className="text-xs sm:text-sm">
                           The email you check most often.
                         </FormDescription>
                         <FormMessage />
@@ -676,6 +677,7 @@ export default function MyForm() {
                           updated.splice(index, 1);
                           form.setValue("otherEmails", updated);
                         }}
+                        className="shrink-0 w-full sm:w-auto"
                       >
                         X
                       </Button>
@@ -692,7 +694,7 @@ export default function MyForm() {
                   form.setValue("otherEmails", [...current, ""]);
                 }}
                 variant="outline"
-                className={`${!termsAccepted ? "disabled-overlay" : ""}`}
+                className={`w-full sm:w-auto ${!termsAccepted ? "disabled-overlay" : ""}`}
               >
                 + Add Email
               </Button>
@@ -704,7 +706,7 @@ export default function MyForm() {
             name="work"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
+                <FormLabel className="text-sm sm:text-base">
                   Is there anything interesting that you work on?
                 </FormLabel>
                 <FormControl>
@@ -727,7 +729,7 @@ export default function MyForm() {
             name="workLink"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Other Links</FormLabel>
+                <FormLabel className="text-sm sm:text-base">Other Links</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="https://jrs-studios.web.cern.ch/"
@@ -736,7 +738,7 @@ export default function MyForm() {
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-xs sm:text-sm">
                   If you have a site that you think would be worth visitng, drop
                   it below!{" "}
                 </FormDescription>
@@ -747,10 +749,10 @@ export default function MyForm() {
 
           <Separator className="my-4" />
 
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-lg border p-4 gap-4 md:gap-0">
-            <div className="space-y-0.5">
-              <FormLabel>Your Global Footprint</FormLabel>
-              <FormDescription>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-lg border p-4 sm:p-6 gap-4 md:gap-0">
+            <div className="space-y-0.5 w-full">
+              <FormLabel className="text-base sm:text-lg">Your Global Footprint</FormLabel>
+              <FormDescription className="text-xs sm:text-sm md:text-base leading-relaxed">
                 This was another important reason for building this. You'd be
                 surprised by how much of a global reach one may have, and I hope
                 to learn from you about the places you have been to, and the
@@ -767,7 +769,7 @@ export default function MyForm() {
             name="currentLocation"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
+                <FormLabel className="text-sm sm:text-base">
                   Your Address<span className="text-red-600">*</span>
                 </FormLabel>
                 <FormControl className={`${!termsAccepted ? "disabled-overlay" : ""}`}>
@@ -776,7 +778,7 @@ export default function MyForm() {
                     onChange={field.onChange}
                   />
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-xs sm:text-sm">
                   Add your current address. If you would not like to share your
                   complete address, please mention your current city, that would
                   do.
@@ -791,7 +793,7 @@ export default function MyForm() {
             name="otherAddress"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Other Address Details</FormLabel>
+                <FormLabel className="text-sm sm:text-base">Other Address Details</FormLabel>
                 <FormControl>
                   <Input
                     className={`${!termsAccepted ? "disabled-overlay" : ""}`}
@@ -800,7 +802,7 @@ export default function MyForm() {
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-xs sm:text-sm">
                   If the prompt from the address search isn't as accurate, feel free to share any other details here.
                 </FormDescription>
                 <FormMessage />
@@ -813,7 +815,7 @@ export default function MyForm() {
             name="previous"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
+                <FormLabel className="text-sm sm:text-base">
                   Previously Lived<span className="text-red-600">*</span>
                 </FormLabel>
                 <FormControl className={`${!termsAccepted ? "disabled-overlay" : ""}`}>
@@ -822,7 +824,7 @@ export default function MyForm() {
                     onChange={field.onChange}
                   />
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-xs sm:text-sm">
                   Add previous locations you've lived in. These could be places
                   you've done internships at, your childhood home, etc.
                   Basically any place that you've lived in for more than 6
@@ -838,7 +840,7 @@ export default function MyForm() {
             name="dreamVacation"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
+                <FormLabel className="text-sm sm:text-base">
                   If you had to take a dream vacation, Where would it be?
                 </FormLabel>
                 <FormControl>
@@ -849,7 +851,7 @@ export default function MyForm() {
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-xs sm:text-sm">
                   Feel free to share it as City - Country. Eg: Barcelona -
                   Spain.
                 </FormDescription>
@@ -863,7 +865,7 @@ export default function MyForm() {
             name="visited"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
+                <FormLabel className="text-sm sm:text-base">
                   Visited Places<span className="text-red-600">*</span>
                 </FormLabel>
                 <FormControl className={`${!termsAccepted ? "disabled-overlay" : ""}`}>
@@ -872,7 +874,7 @@ export default function MyForm() {
                     onChange={field.onChange}
                   />
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-xs sm:text-sm">
                   Add all the places that you have visited. Please do try adding
                   as many as you can! And kindly note the distintion between
                   places visited and lived in previously.
@@ -889,7 +891,7 @@ export default function MyForm() {
             name="interests"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Interests and Hobbies</FormLabel>
+                <FormLabel className="text-sm sm:text-base">Interests and Hobbies</FormLabel>
                 <FormControl
                   className={`${!termsAccepted ? "disabled-overlay" : ""}`}
                 >
@@ -899,7 +901,7 @@ export default function MyForm() {
                     placeholder="Enter your tags"
                   />
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-xs sm:text-sm">
                   Are there any interests or hobbies that you have? Enter them
                   one by one! Same format. Music - I play the Piano, Sports - I
                   love Football!
@@ -914,7 +916,7 @@ export default function MyForm() {
             name="favourites"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Favourites and Extras</FormLabel>
+                <FormLabel className="text-sm sm:text-base">Favourites and Extras</FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="Type away!"
@@ -922,7 +924,7 @@ export default function MyForm() {
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-xs sm:text-sm">
                   Add anything that you've loved recently! (Or for a long time).
                   A favourite book, TV Show, A Spotify Platylist that you really
                   like. Feel free to drop anything you like here!
@@ -934,10 +936,10 @@ export default function MyForm() {
 
           <Separator className="my-4" />
 
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-lg border p-4 gap-4 md:gap-0">
-            <div className="space-y-0.5">
-              <FormLabel>Socials</FormLabel>
-              <FormDescription>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-lg border p-4 sm:p-6 gap-4 md:gap-0">
+            <div className="space-y-0.5 w-full">
+              <FormLabel className="text-base sm:text-lg">Socials</FormLabel>
+              <FormDescription className="text-xs sm:text-sm md:text-base">
                 And Last but not the least, your socials! I would love to
                 connect with you on these platforms. Feel free to share as many
                 as you like!
@@ -945,14 +947,14 @@ export default function MyForm() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4">
+            <div className="sm:col-span-1 md:col-span-6">
               <FormField
                 control={form.control}
                 name="instagram"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Instagram</FormLabel>
+                    <FormLabel className="text-sm sm:text-base">Instagram</FormLabel>
                     <FormControl>
                       <Input
                         className={`${
@@ -970,13 +972,13 @@ export default function MyForm() {
               />
             </div>
 
-            <div className="md:col-span-6">
+            <div className="sm:col-span-1 md:col-span-6">
               <FormField
                 control={form.control}
                 name="linkedin"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>LinkedIn</FormLabel>
+                    <FormLabel className="text-sm sm:text-base">LinkedIn</FormLabel>
                     <FormControl>
                       <Input
                         className={`${
@@ -995,14 +997,14 @@ export default function MyForm() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4">
+            <div className="sm:col-span-1 md:col-span-6">
               <FormField
                 control={form.control}
                 name="discord"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Discord</FormLabel>
+                    <FormLabel className="text-sm sm:text-base">Discord</FormLabel>
                     <FormControl>
                       <Input
                         className={`${
@@ -1020,13 +1022,13 @@ export default function MyForm() {
               />
             </div>
 
-            <div className="md:col-span-6">
+            <div className="sm:col-span-1 md:col-span-6">
               <FormField
                 control={form.control}
                 name="reddit"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Reddit</FormLabel>
+                    <FormLabel className="text-sm sm:text-base">Reddit</FormLabel>
                     <FormControl>
                       <Input
                         className={`${
@@ -1045,14 +1047,14 @@ export default function MyForm() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4">
+            <div className="sm:col-span-1 md:col-span-6">
               <FormField
                 control={form.control}
                 name="github"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>GitHub</FormLabel>
+                    <FormLabel className="text-sm sm:text-base">GitHub</FormLabel>
                     <FormControl>
                       <Input
                         className={`${
@@ -1076,7 +1078,7 @@ export default function MyForm() {
             name="other"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Others</FormLabel>
+                <FormLabel className="text-sm sm:text-base">Others</FormLabel>
                 <FormControl>
                   <Input
                     className={`${!termsAccepted ? "disabled-overlay" : ""}`}
@@ -1085,7 +1087,7 @@ export default function MyForm() {
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-xs sm:text-sm">
                   Add any other socials you would like to stay connected
                   through!
                 </FormDescription>
@@ -1097,12 +1099,12 @@ export default function MyForm() {
           <Separator className="my-4" />
 
           <div className="">
-            <FormLabel>Review Your Answers</FormLabel>
-            <FormDescription>Please Review All your Answers</FormDescription>
+            <FormLabel className="text-sm sm:text-base">Review Your Answers</FormLabel>
+            <FormDescription className="text-xs sm:text-sm">Please Review All your Answers</FormDescription>
           </div>
 
-          <Button type="submit">{loading ? "Submitting..." : "Submit"}</Button>
-          {error && <p style={{ color: "red" }}>{error}</p>}
+          <Button type="submit" className="w-full sm:w-auto">{loading ? "Submitting..." : "Submit"}</Button>
+          {error && <p className="text-sm text-red-500">{error}</p>}
         </form>
       </Form>
     );

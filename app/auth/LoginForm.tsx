@@ -256,11 +256,11 @@ export default function LoginForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-6 w-full", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Chronicles</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-xl sm:text-2xl">Chronicles</CardTitle>
+          <CardDescription className="text-xs sm:text-sm leading-relaxed">
             {!otpRequested
               ? "Hey there! To enter the form, please enter your email address. We'll send you an OTP to verify your identity. We recommend that you access this form on your laptop rather than your mobile device."
               : `OTP has been sent to ${email}. If you are a fisrt time user, you may receive an email to confirm your email address. Please enter the OTP you received, or in case of the confirmation link, please click on the link to continue.`}
@@ -272,7 +272,7 @@ export default function LoginForm({
             <form onSubmit={sendEmailToUser}>
               <div className="flex flex-col gap-6">
                 <div className="grid gap-3">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-sm sm:text-base">Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -294,7 +294,7 @@ export default function LoginForm({
                 </div>
                 {message && (
                   <div
-                    className={`text-center text-sm ${
+                    className={`text-center text-xs sm:text-sm ${
                       message.includes("Failed")
                         ? "text-red-500"
                         : "text-green-600"
@@ -310,21 +310,22 @@ export default function LoginForm({
             <form onSubmit={handleSubmit}>
               <div className="flex flex-col gap-6">
                 <div className="grid gap-3">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="otp">OTP</Label>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                    <Label htmlFor="otp" className="text-sm sm:text-base">OTP</Label>
                     <button
                       type="button"
                       onClick={handleBackToEmail}
-                      className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
+                      className="text-xs sm:text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
                     >
                       Change Email
                     </button>
                   </div>
-                  <div className="w-full flex items-center">
+                  <div className="w-full flex items-center justify-center">
                     <InputOTP
                       required
                       maxLength={8}
                       className="justify-center"
+                      containerClassName="w-full justify-center"
                       value={otp}
                       onChange={(value) => setOtp(value)}
                       disabled={loading}
@@ -355,12 +356,12 @@ export default function LoginForm({
                   </Button>
                 </div>
                 {error && (
-                  <div className="text-center text-sm text-red-500">
+                  <div className="text-center text-xs sm:text-sm text-red-500">
                     {error}
                   </div>
                 )}
                 {message && (
-                  <div className="text-center text-sm text-green-600">
+                  <div className="text-center text-xs sm:text-sm text-green-600">
                     {message}
                   </div>
                 )}

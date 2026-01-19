@@ -28,16 +28,16 @@ export default function Page() {
 
   if (!pageLoad) {
     return (
-      <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-        <div className="w-full max-w-sm">
+      <div className="flex min-h-svh w-full items-center justify-center p-4 sm:p-6 md:p-10">
+        <div className="w-full max-w-sm sm:max-w-md">
           <p>Loading...</p>
         </div>
       </div>
     );
   } else {
     return (
-      <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-        <div className="w-full max-w-sm">
+      <div className="flex min-h-svh w-full items-center justify-center p-4 sm:p-6 md:p-10">
+        <div className="w-full max-w-sm sm:max-w-md">
           <LoginForm />
         </div>
       </div>
