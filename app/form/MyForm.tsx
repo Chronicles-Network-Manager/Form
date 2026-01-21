@@ -5,6 +5,7 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -40,7 +41,7 @@ const formSchema = z.object({
   middleNames: z.string().min(1).optional(),
   lastName: z.string().min(1).nonempty("Last name is required"),
   phone: z.string(),
-  email: z.string(),
+  email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
   otherPhones: z.array(z.string()).optional(),
   otherEmails: z.array(z.string()).optional(),
   groups: z.array(z.string()).nonempty("Please add at least one item"),
@@ -152,7 +153,15 @@ export default function MyForm() {
       const result = await uploadFormData(values);
 
       if (result.error) {
-        toast.error("Failed to Upload Data " + result);
+        console.error("Upload error:", result.error);
+        let errorMessage = "Failed to upload data. Please try again.";
+        if (result.error && typeof result.error === 'object') {
+          errorMessage = (result.error as { message?: string })?.message || errorMessage;
+        } else if (typeof result.error === 'string') {
+          errorMessage = result.error;
+        }
+        toast.error(errorMessage);
+        setError(errorMessage);
       } else {
         toast.success("Profile uploaded successfully!");
         const userName = values.firstName || "";
@@ -365,6 +374,9 @@ export default function MyForm() {
                         </MultiSelectorTrigger>
                         <MultiSelectorContent>
                           <MultiSelectorList>
+                            <MultiSelectorItem value="USER">
+                              User
+                            </MultiSelectorItem>
                             <MultiSelectorItem value="FAMILY">
                               Family
                             </MultiSelectorItem>
@@ -374,20 +386,14 @@ export default function MyForm() {
                             <MultiSelectorItem value="WORK">
                               Work
                             </MultiSelectorItem>
+                            <MultiSelectorItem value="ACQUAINTANCE">
+                              Acquaintance
+                            </MultiSelectorItem>
                             <MultiSelectorItem value="SCHOOL">
                               School
                             </MultiSelectorItem>
                             <MultiSelectorItem value="COLLEGE">
                               College
-                            </MultiSelectorItem>
-                            <MultiSelectorItem value="ACQUAINTANCES">
-                              Acquaintances
-                            </MultiSelectorItem>
-                            <MultiSelectorItem value="WE JUST MET">
-                              WE JUST MET
-                            </MultiSelectorItem>
-                            <MultiSelectorItem value="COMMUNITY">
-                              Community
                             </MultiSelectorItem>
                             <MultiSelectorItem value="OTHER">
                               Other
@@ -1103,7 +1109,27 @@ export default function MyForm() {
             <FormDescription className="text-xs sm:text-sm">Please Review All your Answers</FormDescription>
           </div>
 
-          <Button type="submit" className="w-full sm:w-auto">{loading ? "Submitting..." : "Submit"}</Button>
+          <Button 
+            type="submit" 
+            className="w-full sm:w-auto"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Submit"
+            )}
+          </Button>
+          
+          {Object.keys(form.formState.errors).length > 0 && form.formState.isSubmitted && (
+            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+              <p className="font-medium">Please scroll up to review and fix the errors in your form.</p>
+            </div>
+          )}
+          
           {error && <p className="text-sm text-red-500">{error}</p>}
         </form>
       </Form>

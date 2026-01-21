@@ -36,14 +36,22 @@ export async function uploadFormData(values: FormValues) {
   try {
     //console.log("🔍 Checking if contact already exists...");
 
+    // Validate email before querying
+    if (!values.email || values.email.trim() === "") {
+      return { 
+        data: null, 
+        error: { message: "Email is required", code: "VALIDATION_ERROR" } 
+      };
+    }
+
     const { data: existingUser, error: userCheckError } = await supabase
       .from("Contacts")
       .select("userId")
-      .eq("email", values.email)
+      .eq("email", values.email.trim())
       .maybeSingle();
 
     if (userCheckError && userCheckError.code !== "PGRST116") {
-      //console.error("❌ Error checking existing user:", userCheckError);
+      console.error("❌ Error checking existing user:", userCheckError);
       return { data: null, error: userCheckError };
     }
 
@@ -53,19 +61,27 @@ export async function uploadFormData(values: FormValues) {
       //console.log("✅ Existing user found:", existingUser.userId);
       userId = existingUser.userId;
     } else {
+      // Validate required fields - birthday is mandatory
+      if (!values.birthday) {
+        return { 
+          data: null, 
+          error: { message: "Birthday is required", code: "VALIDATION_ERROR" } 
+        };
+      }
+
+      // All dates (birthday and anniversaries) are stored in Reminders table only
+      // No anniversary field in Contacts table anymore
       const insertPayload = {
         firstName: values.firstName,
         middleNames: values.middleNames ?? null,
         lastName: values.lastName,
         phone: values.phone,
-        email: values.email,
+        email: values.email.trim(),
         otherPhones: values.otherPhones ?? [],
         otherEmails: values.otherEmails ?? [],
         jobTitle: values.jobTitle ?? null,
         company: values.company ?? null,
         work: values.work ?? null,
-        birthday: values.birthday,
-        anniversaries: values.anniversaries?.map((a) => a.date) ?? [],
         groups: values.groups ?? [],
         interests: values.interests ?? [],
         yoe: values.yoe ?? null,
@@ -94,6 +110,12 @@ export async function uploadFormData(values: FormValues) {
     if (locationError) {
       //console.error("❌ Error inserting locations:", locationError);
       return { data: null, error: locationError };
+    }
+
+    const remindersError = await insertReminders(userId, values);
+    if (remindersError) {
+      //console.error("❌ Error inserting reminders:", remindersError);
+      return { data: null, error: remindersError };
     }
 
     const socialsPayload = {
@@ -134,7 +156,9 @@ export async function uploadFormData(values: FormValues) {
 const insertLocations = async (userId: string, values: FormValues) => {
   // Insert CURRENT location if at least one address field is non-null/non-empty
   if (
-    values.currentLocation
+    values.currentLocation && 
+    Array.isArray(values.currentLocation) && 
+    values.currentLocation.length > 0
   ) {
     const currentLocationPayload = {
       userId,
@@ -201,6 +225,53 @@ const insertLocations = async (userId: string, values: FormValues) => {
           .from("Location")
           .insert(visitedPayload);
         if (visitError) return visitError;
+      }
+    }
+  }
+
+  return null; // no errors
+};
+
+const insertReminders = async (userId: string, values: FormValues) => {
+  // Insert birthday reminder (mandatory)
+  // Birthday is validated earlier, so this should always exist
+  if (!values.birthday) {
+    return { message: "Birthday is required for reminder creation", code: "VALIDATION_ERROR" };
+  }
+
+  const birthdayPayload = {
+    userId,
+    type: "BIRTHDAY",
+    message: `Birthday of ${values.firstName} ${values.lastName}`,
+    date: values.birthday.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD format
+    isRecurring: true,
+    recurringType: "EVERY_YEAR",
+    send: null, // Optional send time
+  };
+  //console.log("🎂 Inserting BIRTHDAY reminder:", birthdayPayload);
+  const { error: birthdayError } = await supabase
+    .from("Reminders")
+    .insert(birthdayPayload);
+  if (birthdayError) return birthdayError;
+
+  // Insert anniversary reminders
+  if (Array.isArray(values.anniversaries)) {
+    for (const anniversary of values.anniversaries) {
+      if (anniversary.date) {
+        const anniversaryPayload = {
+          userId,
+          type: "ANNIVERSARY",
+          message: anniversary.label || "Anniversary",
+          date: anniversary.date.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD format
+          isRecurring: true,
+          recurringType: "EVERY_YEAR",
+          send: null, // Optional send time
+        };
+        //console.log("💍 Inserting ANNIVERSARY reminder:", anniversaryPayload);
+        const { error: anniversaryError } = await supabase
+          .from("Reminders")
+          .insert(anniversaryPayload);
+        if (anniversaryError) return anniversaryError;
       }
     }
   }
